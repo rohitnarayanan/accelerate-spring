@@ -1,0 +1,68 @@
+# Spring Config
+spring:
+  application:
+    name: accelerate-spring
+    
+  jackson:
+    mapper:
+      auto-detect-fields: true
+      auto-detect-getters: false
+      auto-detect-is-getters: false
+      auto-detect-setters: false
+    generator: 
+      quote-field-names: true
+      escape-non-ascii: true
+    serialization:
+      fail-on-empty-beans: false
+      indent-output: false
+      
+
+# Server Config
+server:
+  port: 8080
+  servlet:
+    application-display-name: accelerate-spring
+    context-path: /accelerate-spring
+    path: /
+
+management:
+  endpoints:
+    enabled-by-default: true
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+# accelerate-spring-web config
+accelerate:
+  spring:
+    defaults: enabled
+    jackson:
+      defaults: disabled
+    logging:
+      debug: enabled #Enable debug logs
+      audit: disabled #Enable audit logs for entry and exit of annotated methods
+      #metrics: enabled #Enable metric logs for execution time of annotated methods
+    web:
+      actuator:
+        info: 
+          #diskspace: enabled
+          #host: enabled
+          #memory: enabled
+          #runtime: enabled
+      api:
+        #base-path: /webapi
+      security:
+        #enabled: enabled
+        allow-url-Patterns: "/accelerate/**,/webapi/**"
+        #ignore-url-Patterns: ""
+        #login-path: /login
+        #logout-path: /logout
+        #logout-clear-cookies: JSESSIONID,
+        #post-logout-url: /login?logout
+        #actuator-roles: ADMIN
+        #max-user-sessions: 2
+        #session-invalid-url: /login?sessionInvalid
+        #session-expired-url: /login?sessionExpired
