@@ -1,4 +1,4 @@
-package accelerate.spring.web.security;
+package accelerate.spring.security;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -4,23 +4,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Profile;
-import org.springframework.util.ReflectionUtils;
+import org.springframework.stereotype.Component;
 
-import accelerate.spring.ProfileConstants;
+import com.walgreens.springboot.config.ConfigConstants;
+import com.walgreens.springboot.config.ConfigProps;
+import com.walgreens.springboot.util.JSONUtils;
 
 /**
- * Configuration to auto-wire {@link Logger} instances for fields annotated by
- * {@link AutowireLogger}
+ * {@link BeanPostProcessor} to log all {@link ConfigProps} initialized by
+ * Spring
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan
- * @since October 20, 2018
+ * @since December 11, 2017
  */
-@Profile(ProfileConstants.PROFILE_LOGGING)
-@Configuration
-public class LoggerConfig implements BeanPostProcessor {
+@Profile(ConfigConstants.PROFILE_LOGGING)
+@Component
+@ConditionalOnExpression("${com.walgreens.springboot.logging.config-props:${com.walgreens.springboot.defaults:true}}")
+public class ConfigPropsLogger implements BeanPostProcessor {
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -52,14 +55,18 @@ public class LoggerConfig implements BeanPostProcessor {
 	 */
 	@Override
 	public Object postProcessAfterInitialization(Object aBean, String aBeanName) throws BeansException {
-		ReflectionUtils.doWithFields(aBean.getClass(), aField -> {
-			ReflectionUtils.makeAccessible(aField);
-			if (aField.getAnnotation(AutowireLogger.class) != null) {
-				Logger logger = LoggerFactory.getLogger(aBean.getClass());
-				aField.set(aBean, logger);
-			}
-		});
+		/*
+		 * If debug is enabled and bean is of type DataBean then log information
+		 */
+		if (LOGGER.isDebugEnabled() && aBean.getClass().isAnnotationPresent(ConfigProps.class)) {
+			LOGGER.debug("{}.INIT: {}", aBean.getClass().getName(), JSONUtils.serialize(aBean));
+		}
 
 		return aBean;
 	}
+
+	/**
+	 * {@link Logger} instance
+	 */
+	private static final Logger LOGGER = LoggerFactory.getLogger(ConfigPropsLogger.class);
 }

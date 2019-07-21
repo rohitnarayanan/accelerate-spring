@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import accelerate.spring.constants.ProfileConstants;
+import accelerate.spring.ProfileConstants;
 
 /**
  * Bean class to hold logging configuration properties

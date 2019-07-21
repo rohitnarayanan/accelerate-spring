@@ -1,6 +1,6 @@
 package accelerate.spring.cache;
 
-import static accelerate.commons.constants.CommonConstants.EMPTY_STRING;
+import static accelerate.commons.constant.CommonConstants.EMPTY_STRING;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -10,13 +10,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.jmx.export.annotation.ManagedResource;
@@ -26,23 +29,22 @@ import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import accelerate.commons.constants.CommonConstants;
+import accelerate.commons.constant.CommonConstants;
 import accelerate.commons.data.DataMap;
-import accelerate.commons.exceptions.ApplicationException;
-import accelerate.commons.utils.JSONUtils;
-import accelerate.commons.utils.StringUtils;
-import accelerate.spring.logging.Log;
-import accelerate.spring.logging.LoggerAspect;
-import accelerate.spring.staticlistener.StaticListenerUtil;
+import accelerate.commons.exception.ApplicationException;
+import accelerate.commons.util.JacksonUtils;
+import accelerate.commons.util.StringUtils;
+import accelerate.spring.cache.CacheLoadEvent.CacheEventType;
+import accelerate.spring.logging.LogUtils;
+import accelerate.spring.logging.Profiled;
 
 /**
  * This is a generic {@link Map} based cache stored on the JVM heap. It has no
  * persistence mechanism. It is designed to be loaded at startup and provide
- * quick lookup for small data sets. Accelerate also provides JMX operations to
- * manage the cache and a web UI to view the cache.
+ * quick lookup for small data sets. It also provides JMX operations to manage
+ * the cache and a web UI to view the cache.
  * 
  * It is not a replacement for more comprehensive caching frameworks like
  * ehcache etc.
@@ -54,22 +56,13 @@ import accelerate.spring.staticlistener.StaticListenerUtil;
  * @since October 2, 2017
  */
 @ManagedResource(description = "Generic Map providing easy-to-use cache for small static data sets")
+@Profiled
 public class DataMapCache<V> implements Serializable {
 	/**
-	 * serialVersionUID
+	 * {@link ApplicationEventPublisher} instance
 	 */
-	private static final long serialVersionUID = 1L;
-
-	/**
-	 * {@link Logger} instance
-	 */
-	protected static final Logger _LOGGER = LoggerFactory.getLogger(DataMapCache.class);
-
-	/**
-	 * {@link StaticListenerUtil} instance
-	 */
-	@Autowired(required = false)
-	protected transient StaticListenerUtil staticListenerUtil = null;
+	@Autowired
+	private transient ApplicationEventPublisher applicationEventPublisher = null;
 
 	/**
 	 * Cache Name
@@ -84,7 +77,7 @@ public class DataMapCache<V> implements Serializable {
 	/**
 	 * {@link DataMap} instance serving as cache store
 	 */
-	private transient final DataMap<V> cacheMap;
+	private transient final DataMap cacheMap;
 
 	/**
 	 * Semaphore to block while cache is being refresh
@@ -107,14 +100,20 @@ public class DataMapCache<V> implements Serializable {
 	protected String dataQuery;
 
 	/**
-	 * {@link Function} implementation to load value from the resultset
+	 * {@link Function} implementation to filter which values to load from database.
+	 * default implementation does not filter anything
 	 */
-	private transient Function<Map<String, Object>, String> keyProvider;
+	protected transient Function<Map<String, Object>, Boolean> recordFilter;
 
 	/**
-	 * 
+	 * {@link Function} implementation to load key from the result set
 	 */
-	private transient Function<Map<String, Object>, V> valueProvider;
+	protected transient Function<Map<String, Object>, String> keyProvider;
+
+	/**
+	 * {@link Function} implementation to load value from the result set
+	 */
+	protected transient Function<Map<String, Object>, V> valueProvider;
 
 	/**
 	 * Init time of Cache
@@ -143,8 +142,10 @@ public class DataMapCache<V> implements Serializable {
 		this.cacheName = aCacheName;
 		this.valueType = aValueType;
 
-		this.cacheMap = new DataMap<>();
+		this.cacheMap = DataMap.newMap();
 		this.cacheStatus = CacheStatus.NEW;
+
+		this.recordFilter = (aRowMap) -> true;
 	}
 
 	/**
@@ -158,24 +159,28 @@ public class DataMapCache<V> implements Serializable {
 	@PostConstruct
 	public void initialize() {
 		Assert.state(this.cacheStatus == CacheStatus.NEW, "Cache already initialized");
-		Exception methodError = null;
 
+		Profiler profiler = LogUtils.startProfiler(this.cacheName + ".initialize", LOGGER);
 		try {
+			profiler.start("loadCache");
+
 			loadCache();
+
+			profiler.start("setup");
+
 			this.cacheInitializedTime = new Date();
 			this.cacheRefreshedTime = new Date();
 
 			calculateCacheDuration();
 			this.cacheStatus = CacheStatus.INITIALIZED;
-			_LOGGER.info("Cache [{}] Initialized", this.cacheName);
+			LOGGER.info("Cache [{}] Initialized", this.cacheName);
 
-//			this.staticListenerUtil.notifyCacheLoad(DataMapCache.this);
+			// publish the initialized event
+			this.applicationEventPublisher.publishEvent(new CacheLoadEvent<>(this, CacheEventType.INIT));
 		} catch (Exception error) {
-			methodError = error;
 			ApplicationException.checkAndThrow(error, "Error in initializing cache [%s]", this.cacheName);
 		} finally {
-			LoggerAspect.logMethodExit(String.format("%s [%s]", this.getClass().getName(), this.cacheName),
-					methodError);
+			profiler.stop().log();
 		}
 	}
 
@@ -196,20 +201,22 @@ public class DataMapCache<V> implements Serializable {
 		 */
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSource);
 		List<Map<String, Object>> queryData = jdbcTemplate.queryForList(this.dataQuery);
-		queryData.forEach(aRowMap -> put(DataMapCache.this.keyProvider.apply(aRowMap),
-				DataMapCache.this.valueProvider.apply(aRowMap)));
+		Map<String, V> tempMap = queryData.parallelStream().filter(aRowMap -> this.recordFilter.apply(aRowMap))
+				.collect(Collectors.toMap(aRowMap -> this.keyProvider.apply(aRowMap),
+						aRowMap -> this.valueProvider.apply(aRowMap)));
+
+		this.cacheMap.clear();
+		this.cacheMap.putAll(tempMap);
 	}
 
 	/**
 	 * This method refreshes the cache
 	 *
-	 * @throws ApplicationException thrown by {@link #loadCache()} and
-	 *                              {@link StaticListenerUtil#notifyCacheLoad(DataMapCache)}
+	 * @throws ApplicationException thrown by {@link #loadCache()}
 	 */
-	@Log
 	@ManagedOperation(description = "This method refreshes the cache")
 	public void refresh() throws ApplicationException {
-		_LOGGER.debug("Refreshing Cache [{}]", this.cacheName);
+		LOGGER.debug("Refreshing Cache [{}]", this.cacheName);
 
 		this.cacheStatus = CacheStatus.REFRESHING;
 
@@ -219,15 +226,13 @@ public class DataMapCache<V> implements Serializable {
 		// update refresh time and age
 		this.cacheRefreshedTime = new Date();
 
-		// notify all registered listeners
-		if (this.staticListenerUtil != null) {
-			this.staticListenerUtil.notifyCacheLoad(DataMapCache.this);
-		}
-
 		// reset refresh monitor and wake all threads waiting for access
 		this.cacheStatus = CacheStatus.INITIALIZED;
 
-		_LOGGER.info("Cache [{}] Refreshed", this.cacheName);
+		// publish the refresh event
+		this.applicationEventPublisher.publishEvent(new CacheLoadEvent<>(this, CacheEventType.REFRESH));
+
+		LOGGER.info("Cache [{}] Refreshed", this.cacheName);
 	}
 
 	/*
@@ -250,20 +255,12 @@ public class DataMapCache<V> implements Serializable {
 	}
 
 	/**
-	 * @param aDataMap
-	 */
-	public void putAll(DataMap<V> aDataMap) {
-		this.cacheMap.putAll(aDataMap);
-	}
-
-	/**
 	 * This method returns the JSON form of value stored in cache against the given
 	 * key
 	 *
 	 * @param aKey key string to fetch value stored in the cache
 	 * @return value instance stored against the key
-	 * @throws ApplicationException thrown by {@link JSONUtils#serialize(Object)}
-	 *                              and {@link JSONUtils#deserialize(String, Class)}
+	 * @throws ApplicationException thrown by {@link JacksonUtils#toJSON(Object)}
 	 */
 	@ManagedOperation(description = "This method returns the JSON form of value stored in cache against the given key")
 	public String getJSON(String aKey) throws ApplicationException {
@@ -272,7 +269,7 @@ public class DataMapCache<V> implements Serializable {
 			return EMPTY_STRING;
 		}
 
-		return JSONUtils.serialize(value);
+		return JacksonUtils.toJSON(value);
 	}
 
 	/**
@@ -280,14 +277,17 @@ public class DataMapCache<V> implements Serializable {
 	 *
 	 * @param aKey       Key to be added to the cache
 	 * @param aJSONValue JSON representation of Value to be stored in the cache.
-	 * @throws ApplicationException thrown by {@link JSONUtils#serialize(Object)}
-	 *                              and {@link JSONUtils#deserialize(String, Class)}
+	 * @throws ApplicationException thrown by
+	 *                              {@link JacksonUtils#fromJSON(String, Class)}
 	 */
 	@ManagedOperation(description = "This method stores the given key-value pair in cache after converting them")
 	public void putJSON(String aKey, String aJSONValue) throws ApplicationException {
 		Assert.isTrue(!StringUtils.isEmpty(aJSONValue), "JSON value cannot be empty");
-
-		put(aKey, JSONUtils.deserialize(aJSONValue, this.valueType));
+		if (this.valueType == String.class) {
+			put(aKey, this.valueType.cast(aJSONValue));
+		} else {
+			put(aKey, JacksonUtils.fromJSON(aJSONValue, this.valueType));
+		}
 	}
 
 	/*
@@ -296,15 +296,22 @@ public class DataMapCache<V> implements Serializable {
 	/**
 	 * @return
 	 */
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	/**
+	 * @return
+	 */
+	@Override
 	@ManagedOperation(description = "This method returns the basic cache information")
-	public String toJSON() {
-		ObjectMapper objectMapper = JSONUtils.objectMapper();
-		objectMapper.addMixIn(DataMapCache.class, MixIn.class);
-		try {
-			return objectMapper.writeValueAsString(this);
-		} catch (JsonProcessingException error) {
-			throw new ApplicationException(error);
-		}
+	public String toString() {
+		ObjectMapper objectMapper = JacksonUtils.objectMapper();
+		objectMapper.addMixIn(DataMapCache.class, DataMapCacheMixIn.class);
+
+		return JacksonUtils.toJSON(objectMapper, this);
 	}
 
 	/**
@@ -357,8 +364,8 @@ public class DataMapCache<V> implements Serializable {
 	 * 
 	 * @return list of cached keys
 	 */
-	public Map<String, V> getCacheStore() {
-		return Collections.unmodifiableMap(this.cacheMap);
+	public DataMap getCacheMap() {
+		return (DataMap) Collections.unmodifiableMap(this.cacheMap);
 	}
 
 	/*
@@ -378,17 +385,6 @@ public class DataMapCache<V> implements Serializable {
 	public void setCacheAge(String aCacheAge) {
 		this.cacheAge = aCacheAge;
 		calculateCacheDuration();
-	}
-
-	/**
-	 * Setter method for "dataSource" property
-	 * 
-	 * @param aDataSource
-	 * @param aDataQuery
-	 */
-	public void setDataProviders(DataSource aDataSource, String aDataQuery) {
-		this.dataSource = aDataSource;
-		this.dataQuery = aDataQuery;
 	}
 
 	/**
@@ -443,13 +439,13 @@ public class DataMapCache<V> implements Serializable {
 		if (StringUtils.isEmpty(this.cacheAge)) {
 			this.cacheDuration = -1;
 		} else {
-			String[] tokens = StringUtils.safeSplit(this.cacheAge, CommonConstants.SPACE_CHAR);
+			String[] tokens = StringUtils.split(this.cacheAge, CommonConstants.SPACE);
 			this.cacheDuration = TimeUnit.valueOf(tokens[1]).toMillis(Long.parseLong(tokens[0]));
 		}
 	}
 
 	/**
-	 * PUT DESCRIPTION HERE
+	 * ENUM for cache status values
 	 * 
 	 * @version 1.0 Initial Version
 	 * @author Rohit Narayanan
@@ -471,14 +467,14 @@ public class DataMapCache<V> implements Serializable {
 	}
 
 	/**
-	 * PUT DESCRIPTION HERE
+	 * Jackson MixIn to serialize relevant fields
 	 * 
 	 * @version 1.0 Initial Version
 	 * @author Rohit Narayanan
 	 * @since November 10, 2018
 	 */
 	@SuppressWarnings("hiding")
-	abstract class MixIn {
+	abstract class DataMapCacheMixIn {
 		/**
 		 */
 		@JsonProperty("name")
@@ -510,4 +506,14 @@ public class DataMapCache<V> implements Serializable {
 		@JsonProperty("refreshedAt")
 		public Date cacheRefreshedTime;
 	}
+
+	/**
+	 * serialVersionUID
+	 */
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * {@link Logger} instance
+	 */
+	protected static final Logger LOGGER = LoggerFactory.getLogger(DataMapCache.class);
 }

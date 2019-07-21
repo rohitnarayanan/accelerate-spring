@@ -1,0 +1,156 @@
+{
+	"properties": [
+		{
+			"name": "com.walgreens.springboot.defaults",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable default settings"
+		},
+		{
+			"name": "com.walgreens.springboot.base-packages",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of base packages that are included in this application.'com.walgreens.springboot' is included by default'"
+		},
+		{
+			"name": "com.walgreens.springboot.logging.profiling",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable profiler logging. Defaults to value of 'com.walgreens.springboot.defaults'"
+		},
+		{
+			"name": "com.walgreens.springboot.security.url-patterns.ignored",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of URL patterns that should be ignored by Spring Security"
+		},
+		{
+			"name": "com.walgreens.springboot.security.url-patterns.allowed",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of URL patterns that should be allowed for all by Spring Security"
+		},
+		{
+			"name": "com.walgreens.springboot.security.logout.clear-cookies",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of cookies that should be cleared on logout"
+		},
+		{
+			"name": "com.walgreens.springboot.security.logout.success-url",
+			"type": "java.lang.String",
+			"description": "URL to redirect the user to after logout. Spring default is /login?logout"
+		},
+		{
+			"name": "com.walgreens.springboot.security.session.max-count",
+			"type": "java.lang.Integer",
+			"description": "Maximum number of sessions to be allowed in the application. Defaults to -1 which is unlimited"
+		},
+		{
+			"name": "com.walgreens.springboot.security.session.expired-url",
+			"type": "java.lang.String",
+			"description": "URL to redirect the user if the session has expired. Defaults to /login?sessionExpired"
+		},
+		{
+			"name": "com.walgreens.springboot.security.actuator.roles",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of roles that have access to actuator endpoints. Default is to allow all"
+		},
+		{
+			"name": "com.walgreens.springboot.web.path.home",
+			"type": "java.lang.String",
+			"description": "Path to the home page of the application. This allows to redirect user from context root / to home page"
+		},
+		{
+			"name": "com.walgreens.springboot.web.path.favicon",
+			"type": "java.lang.String",
+			"description": "Path to the favicon for the application which will be used on the default index and error pages. Defaults to '/com/walgreens/springboot/favicon.ico'"
+		},
+		{
+			"name": "com.walgreens.springboot.web.default-view.index",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable default index page. Defaults to value of 'com.walgreens.springboot.defaults'"
+		},
+		{
+			"name": "com.walgreens.springboot.web.default-view.error",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable default error page. Defaults to value of 'com.walgreens.springboot.defaults'"
+		},
+		{
+			"name": "com.walgreens.springboot.web.api.prefix",
+			"type": "java.lang.String",
+			"description": "Path to map the utility Web APIs. Defaults to /webapi/*"
+		},
+		{
+			"name": "com.walgreens.springboot.web.api.auth",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable AuthController. Defaults to value of 'com.walgreens.springboot.defaults'"
+		},
+		{
+			"name": "com.walgreens.springboot.web.api.cache",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable CacheController. Defaults to value of 'com.walgreens.springboot.defaults'"
+		},
+		{
+			"name": "com.walgreens.springboot.web.api.debug",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable DebugController. Defaults to value of 'com.walgreens.springboot.defaults'"
+		},
+		{
+			"name": "com.walgreens.springboot.web.api.files",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable FilesController. Defaults to value of 'com.walgreens.springboot.defaults'"
+		},
+		{
+			"name": "com.walgreens.springboot.web.api.roles",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of roles that should have access to Web APIs. Default is to allow all"
+		},
+		{
+			"name": "com.walgreens.springboot.web.sdf.proxy-config-path",
+			"type": "java.lang.String",
+			"description": "Classpath of the SDF proxy properties file"
+		},
+		{
+			"name": "com.walgreens.springboot.web.sdf.proxy-url-patterns",
+			"type": "java.lang.String",
+			"description": "Comma separaed URL patterns that need to be mapped for SDF application"
+		},
+		{
+			"name": "com.walgreens.springboot.web.sdf.request-handlers-package-name",
+			"type": "java.lang.String",
+			"description": "Name of the package that contains all request handlers"
+		},
+		{
+			"name": "com.walgreens.springboot.web.sdf.default-request-handler",
+			"type": "java.lang.String",
+			"description": "Name of the request handler that will serve the request when none is provided in the URL"
+		},
+		{
+			"name": "com.walgreens.springboot.web.sdf.jsp.dispatcher-prefix",
+			"type": "java.lang.String",
+			"description": "Path prefix for all JSP forwards from request handlers. Defaults to '/sdf/jsp'"
+		},
+		{
+			"name": "com.walgreens.springboot.web.sdf.jsp.root",
+			"type": "java.lang.String",
+			"description": "Path to root folder for the JSPs. Defaults to '/WEB-INF/jsp/'"
+		}
+	],
+	"hints": [
+		{
+			"name": "com.walgreens.springboot.logging.level",
+			"values": [
+				{
+					"value": "TRACE"
+				},
+				{
+					"value": "DEBUG"
+				},
+				{
+					"value": "INFO"
+				},
+				{
+					"value": "WARN"
+				},
+				{
+					"value": "ERROR"
+				}
+			]
+		}
+	]
+}

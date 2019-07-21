@@ -1,8 +1,8 @@
 package accelerate.spring.cache;
 
-import static accelerate.commons.constants.CommonConstants.COMMA_CHAR;
-import static accelerate.commons.constants.CommonConstants.DOT_CHAR;
-import static accelerate.commons.constants.CommonConstants.EMPTY_STRING;
+import static accelerate.commons.constant.CommonConstants.COMMA;
+import static accelerate.commons.constant.CommonConstants.EMPTY_STRING;
+import static accelerate.commons.constant.CommonConstants.PERIOD;
 
 import java.util.List;
 
@@ -11,9 +11,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 
-import accelerate.commons.exceptions.ApplicationException;
-import accelerate.commons.utils.ConfigurationUtils;
-import accelerate.commons.utils.StringUtils;
+import accelerate.commons.exception.ApplicationException;
+import accelerate.commons.util.CommonUtils;
+import accelerate.commons.util.ConfigurationUtils;
+import accelerate.commons.util.StringUtils;
 
 /**
  * <p>
@@ -22,8 +23,11 @@ import accelerate.commons.utils.StringUtils;
  * </p>
  * <p>
  * The properties can also be defined in a database table and the user will have
- * to provide the data source and query via
- * {@link #setDataProviders(javax.sql.DataSource, String)}
+ * to provide the data source and query via {@link DataMapCache} methods. The
+ * query should ensure that the key column is the first column in the SELECT
+ * clause followed by the value column. For more complex implementation refer to
+ * {@link DataMapCache#recordFilter} / {@link DataMapCache#keyProvider} /
+ * {@link DataMapCache#valueProvider}
  * </p>
  * <p>
  * Users also have the option of saving the properties for multiple environments
@@ -86,7 +90,7 @@ public class PropertyCache extends DataMapCache<String> {
 	 */
 	@ManagedOperation(description = "This method returns the element stored in cache against the given key")
 	public String get(String... aPropertyKeys) {
-		return super.get(String.join(DOT_CHAR, aPropertyKeys));
+		return super.get(String.join(PERIOD, aPropertyKeys));
 	}
 
 	/**
@@ -99,7 +103,7 @@ public class PropertyCache extends DataMapCache<String> {
 	 */
 	public String[] getPropertyList(String... aPropertyKeys) {
 		String value = get(aPropertyKeys);
-		return (value == null) ? new String[] {} : value.split(COMMA_CHAR);
+		return (value == null) ? new String[] {} : value.split(COMMA);
 	}
 
 	/**
@@ -124,7 +128,7 @@ public class PropertyCache extends DataMapCache<String> {
 	 * @return boolean result of the comparison
 	 */
 	public boolean hasValue(String aCompareValue, String... aPropertyKeys) {
-		return StringUtils.safeEquals(get(aPropertyKeys), aCompareValue);
+		return CommonUtils.compare(get(aPropertyKeys), aCompareValue);
 	}
 
 	/*
@@ -137,13 +141,13 @@ public class PropertyCache extends DataMapCache<String> {
 	 */
 	@Override
 	protected void loadCache() throws ApplicationException {
-		final String prefix = StringUtils.isEmpty(this.profileName) ? EMPTY_STRING : this.profileName + DOT_CHAR;
+		final String prefix = StringUtils.isEmpty(this.profileName) ? EMPTY_STRING : this.profileName + PERIOD;
 		final int prefixLength = prefix.length();
 
 		if (!StringUtils.isEmpty(this.configURL)) {
 			ConfigurationUtils.loadPropertyFile(this.configURL).forEach((aKey, aValue) -> {
 				if (aKey.startsWith(prefix)) {
-					put(aKey.substring(prefixLength), aValue);
+					put(aKey.substring(prefixLength), (String) aValue);
 				}
 			});
 		}

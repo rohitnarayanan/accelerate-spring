@@ -4,6 +4,8 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.stereotype.Component;
 
+import accelerate.spring.security.SecurityConfigurer;
+
 /**
  * PUT DESCRIPTION HERE
  * 
@@ -16,7 +18,7 @@ public class AccelerateSecurityConfigurer implements SecurityConfigurer {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see accelerate.spring.web.security.SecurityConfigurer#configure(org.
+	 * @see accelerate.spring.security.SecurityConfigurer#configure(org.
 	 * springframework. security.config.annotation.web.builders.HttpSecurity)
 	 */
 	/**
@@ -32,7 +34,7 @@ public class AccelerateSecurityConfigurer implements SecurityConfigurer {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see accelerate.spring.web.security.SecurityConfigurer#configure(org.
+	 * @see accelerate.spring.security.SecurityConfigurer#configure(org.
 	 * springframework. security.config.annotation.authentication.builders.
 	 * AuthenticationManagerBuilder)
 	 */

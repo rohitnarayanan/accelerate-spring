@@ -1,4 +1,4 @@
-package accelerate.spring.web.security;
+package accelerate.spring.security;
 
 import javax.annotation.PostConstruct;
 
@@ -25,7 +25,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.web.util.UrlPathHelper;
 
 import accelerate.commons.utils.JSONUtils;
-import accelerate.spring.constants.ProfileConstants;
+import accelerate.spring.ProfileConstants;
 import accelerate.spring.logging.Log;
 import accelerate.spring.web.config.SecurityConfigProps;
 

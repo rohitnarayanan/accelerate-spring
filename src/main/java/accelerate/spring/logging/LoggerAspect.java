@@ -22,8 +22,8 @@ import accelerate.commons.exceptions.ApplicationException;
 import accelerate.commons.utils.CommonUtils;
 import accelerate.commons.utils.JSONUtils;
 import accelerate.commons.utils.StringUtils;
+import accelerate.spring.ProfileConstants;
 import accelerate.spring.config.LoggerConfigProps;
-import accelerate.spring.constants.ProfileConstants;
 import accelerate.spring.logging.Log.LogType;
 
 /**

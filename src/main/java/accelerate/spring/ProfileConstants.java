@@ -1,4 +1,4 @@
-package accelerate.spring.constants;
+package accelerate.spring;
 
 /**
  * Class containing constants for this library
@@ -10,6 +10,8 @@ package accelerate.spring.constants;
 @SuppressWarnings("javadoc")
 public class ProfileConstants {
 	public static final String PROFILE_LOGGING = "accelerate.spring.profiles.logging";
+	public static final String PROFILE_WEB = "accelerate.spring.profiles.web";
 	public static final String PROFILE_SECURITY = "accelerate.spring.profiles.security";
 	public static final String PROFILE_NO_SECURITY = "accelerate.spring.profiles.nosecurity";
+
 }

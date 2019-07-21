@@ -5,7 +5,7 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import accelerate.spring.BaseConfig;
+import accelerate.spring.BaseConfiguration;
 
 /**
  * Base web configuration class for the application
@@ -28,6 +28,6 @@ public class BaseWebConfig extends SpringBootServletInitializer implements WebMv
 	 */
 	@Override
 	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-		return application.sources(BaseConfig.class);
+		return application.sources(BaseConfiguration.class);
 	}
 }

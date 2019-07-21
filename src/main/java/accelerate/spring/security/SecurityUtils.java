@@ -1,4 +1,4 @@
-package accelerate.spring.web.security;
+package accelerate.spring.security;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;

@@ -15,67 +15,67 @@ public class SecurityConfigProps {
 	/**
 	 * Flag to indicate whether default handling is to be enabled
 	 */
-	@Value("#{'${accelerate.spring.web.security.enabled:${accelerate.spring.defaults:disabled}}' == 'enabled'}")
+	@Value("#{'${accelerate.spring.security.enabled:${accelerate.spring.defaults:disabled}}' == 'enabled'}")
 	private boolean enabled = true;
 
 	/**
 	 * URL patterns to be allowed for all
 	 */
-	@Value("${accelerate.spring.web.security.allow-url-Patterns:}")
+	@Value("${accelerate.spring.security.allow-url-Patterns:}")
 	private String[] allowURLPatterns = {};
 
 	/**
 	 * URL patterns to be omitted from security
 	 */
-	@Value("${accelerate.spring.web.security.ignore-url-Patterns:}")
+	@Value("${accelerate.spring.security.ignore-url-Patterns:}")
 	private String[] ignoreURLPatterns = {};
 
 	/**
 	 * Path to handle login
 	 */
-	@Value("${accelerate.spring.web.security.login-path:/login}")
+	@Value("${accelerate.spring.security.login-path:/login}")
 	private String loginPath = null;
 
 	/**
 	 * Path to handle logout
 	 */
-	@Value("${accelerate.spring.web.security.logout-path:/logout}")
+	@Value("${accelerate.spring.security.logout-path:/logout}")
 	private String logoutPath = null;
 
 	/**
 	 * Cookies to be cleared on logout
 	 */
-	@Value("${accelerate.spring.web.security.logout-clear-cookies:['JSESSIONID']}")
+	@Value("${accelerate.spring.security.logout-clear-cookies:['JSESSIONID']}")
 	private String[] logoutClearCookies = null;
 
 	/**
 	 * URL to be redirected to after logout
 	 */
-	@Value("${accelerate.spring.web.security.post-logout-url:#{securityConfigProps.loginPath}?logout}")
+	@Value("${accelerate.spring.security.post-logout-url:#{securityConfigProps.loginPath}?logout}")
 	private String postLogoutURL = null;
 
 	/**
 	 * List of roles that are allowed to acces Actuator endpoints
 	 */
-	@Value("${accelerate.spring.web.security.actuator-roles:ADMIN}")
+	@Value("${accelerate.spring.security.actuator-roles:ADMIN}")
 	private String[] actuatorRoles = { "ADMIN" };
 
 	/**
 	 * Maximum number of sessions allowed for a user
 	 */
-	@Value("${accelerate.spring.web.security.max-user-sessions:2}")
+	@Value("${accelerate.spring.security.max-user-sessions:2}")
 	private int maxUserSessions = 0;
 
 	/**
 	 * URL to be redirected on invalid session
 	 */
-	@Value("${accelerate.spring.web.security.session-invalid-url:#{securityConfigProps.loginPath}?sessionInvalid}")
+	@Value("${accelerate.spring.security.session-invalid-url:#{securityConfigProps.loginPath}?sessionInvalid}")
 	private String sessionInvalidURL = null;
 
 	/**
 	 * URL to be redirected on session expire
 	 */
-	@Value("${accelerate.spring.web.security.session-expired-url:#{securityConfigProps.loginPath}?sessionExpired}")
+	@Value("${accelerate.spring.security.session-expired-url:#{securityConfigProps.loginPath}?sessionExpired}")
 	private String sessionExpiredURL = null;
 
 	/**
