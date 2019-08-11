@@ -2,14 +2,12 @@ package accelerate.spring.web.beans;
 
 import java.io.Serializable;
 
-import accelerate.commons.utils.StringUtils;
-
 /**
  * Basic class to pass message with attributed to UI layer
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan
- * @since October 20, 2018
+ * @since October 3, 2017
  */
 public class WebMessage implements Serializable {
 	/**
@@ -59,7 +57,7 @@ public class WebMessage implements Serializable {
 	 * @param aMessageType
 	 */
 	public void setMessageType(String aMessageType) {
-		this.messageType = MessageType.getMessageType(aMessageType);
+		this.messageType = MessageType.valueOf(aMessageType);
 	}
 
 	/**
@@ -138,22 +136,5 @@ public class WebMessage implements Serializable {
 		 *
 		 */
 		ERROR;
-
-		/**
-		 * This method returns the {@link MessageType} instance mapped to the given
-		 * string
-		 *
-		 * @param aMessageType
-		 * @return {@link MessageType}
-		 */
-		public static MessageType getMessageType(String aMessageType) {
-			for (MessageType messageType : values()) {
-				if (StringUtils.safeEquals(messageType.name(), aMessageType)) {
-					return messageType;
-				}
-			}
-
-			return null;
-		}
 	}
 }

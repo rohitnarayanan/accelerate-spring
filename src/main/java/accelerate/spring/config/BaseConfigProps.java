@@ -16,13 +16,13 @@ public class BaseConfigProps {
 	/**
 	 * URL patterns to be omitted from security
 	 */
-	@Value("${com.walgreens.springboot.defaults:true}")
+	@Value("${accelerate.spring.defaults:true}")
 	private boolean defaults;
 
 	/**
 	 * The base-packages for the application
 	 */
-	@Value("${com.walgreens.springboot.base-packages:com.walgreens}")
+	@Value("${accelerate.spring.base-packages:accelerate}")
 	private String[] basePackages;
 
 	/**

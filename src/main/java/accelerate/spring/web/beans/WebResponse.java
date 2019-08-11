@@ -1,15 +1,13 @@
 package accelerate.spring.web.beans;
 
 import accelerate.commons.data.DataBean;
-import accelerate.commons.exceptions.ApplicationException;
-import accelerate.commons.utils.JSONUtils;
 
 /**
  * {@link DataBean} extension for HTTP WebResponse in Web Application
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan
- * @since October 20, 2018
+ * @since October 3, 2017
  */
 public class WebResponse extends DataBean {
 	/**
@@ -75,26 +73,11 @@ public class WebResponse extends DataBean {
 	 * shortcut constructor to set the {@link #viewName} and {@link #request}
 	 *
 	 * @param aViewName
-	 * @param aAccelerateRequest
+	 * @param aWebRequest
 	 */
-	public WebResponse(String aViewName, WebRequest aAccelerateRequest) {
+	public WebResponse(String aViewName, WebRequest aWebRequest) {
 		this.viewName = aViewName;
-		this.request = aAccelerateRequest;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see accelerate.databean.AccelerateDataBean#toShortJSON()
-	 */
-	/**
-	 * @return
-	 * @throws ApplicationException thrown due to
-	 *                              {@link JSONUtils#serializeOnly(Object, String...)}
-	 */
-	@Override
-	public String toShortJSON() throws ApplicationException {
-		return JSONUtils.serializeOnly(this, "returnCode", "viewName", "accelerateMessage");
+		this.request = aWebRequest;
 	}
 
 	/**

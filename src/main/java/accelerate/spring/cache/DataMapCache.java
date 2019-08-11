@@ -92,7 +92,7 @@ public class DataMapCache<V> implements Serializable {
 	/**
 	 * {@link DataSource} instance to query db for properties
 	 */
-	protected transient DataSource dataSource;
+	private transient DataSource dataSource;
 
 	/**
 	 * SQL query to fetch data to be cached
@@ -103,17 +103,17 @@ public class DataMapCache<V> implements Serializable {
 	 * {@link Function} implementation to filter which values to load from database.
 	 * default implementation does not filter anything
 	 */
-	protected transient Function<Map<String, Object>, Boolean> recordFilter;
+	private transient Function<Map<String, Object>, Boolean> recordFilter;
 
 	/**
 	 * {@link Function} implementation to load key from the result set
 	 */
-	protected transient Function<Map<String, Object>, String> keyProvider;
+	private transient Function<Map<String, Object>, String> keyProvider;
 
 	/**
 	 * {@link Function} implementation to load value from the result set
 	 */
-	protected transient Function<Map<String, Object>, V> valueProvider;
+	private transient Function<Map<String, Object>, V> valueProvider;
 
 	/**
 	 * Init time of Cache
@@ -515,5 +515,5 @@ public class DataMapCache<V> implements Serializable {
 	/**
 	 * {@link Logger} instance
 	 */
-	protected static final Logger LOGGER = LoggerFactory.getLogger(DataMapCache.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(DataMapCache.class);
 }

@@ -19,9 +19,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.View;
 
-import com.walgreens.springboot.config.ConfigConstants;
-import com.walgreens.springboot.lang.DataMap;
-import com.walgreens.springboot.logging.Profiled;
+import accelerate.commons.data.DataMap;
+import accelerate.spring.ProfileConstants;
+import accelerate.spring.logging.Profiled;
 
 /**
  * {@link RestController} providing API for monitoring information
@@ -30,9 +30,9 @@ import com.walgreens.springboot.logging.Profiled;
  * @author Rohit Narayanan
  * @since May 16, 2018
  */
-@Profile(ConfigConstants.PROFILE_WEB)
+@Profile(ProfileConstants.PROFILE_WEB)
 @ConditionalOnWebApplication
-@ConditionalOnExpression("${com.walgreens.springboot.web.default-view.error:${com.walgreens.springboot.defaults:true}}")
+@ConditionalOnExpression("${accelerate.spring.web.default-view.error:${accelerate.spring.defaults:true}}")
 @Component("error")
 @Profiled
 public class DefaultErrorView implements View {

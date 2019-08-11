@@ -8,9 +8,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import com.walgreens.springboot.config.ConfigConstants;
-import com.walgreens.springboot.config.ConfigProps;
-import com.walgreens.springboot.util.JSONUtils;
+import accelerate.commons.util.JacksonUtils;
+import accelerate.spring.ProfileConstants;
+import accelerate.spring.config.ConfigProps;
 
 /**
  * {@link BeanPostProcessor} to log all {@link ConfigProps} initialized by
@@ -20,9 +20,9 @@ import com.walgreens.springboot.util.JSONUtils;
  * @author Rohit Narayanan
  * @since December 11, 2017
  */
-@Profile(ConfigConstants.PROFILE_LOGGING)
+@Profile(ProfileConstants.PROFILE_LOGGING)
 @Component
-@ConditionalOnExpression("${com.walgreens.springboot.logging.config-props:${com.walgreens.springboot.defaults:true}}")
+@ConditionalOnExpression("${accelerate.spring.logging.config-props:${accelerate.spring.defaults:true}}")
 public class ConfigPropsLogger implements BeanPostProcessor {
 	/*
 	 * (non-Javadoc)
@@ -59,7 +59,7 @@ public class ConfigPropsLogger implements BeanPostProcessor {
 		 * If debug is enabled and bean is of type DataBean then log information
 		 */
 		if (LOGGER.isDebugEnabled() && aBean.getClass().isAnnotationPresent(ConfigProps.class)) {
-			LOGGER.debug("{}.INIT: {}", aBean.getClass().getName(), JSONUtils.serialize(aBean));
+			LOGGER.debug("{}.INIT: {}", aBean.getClass().getName(), JacksonUtils.toJSON(aBean));
 		}
 
 		return aBean;

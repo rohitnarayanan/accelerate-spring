@@ -6,13 +6,14 @@ import static accelerate.commons.constant.CommonConstants.PERIOD;
 
 import java.util.List;
 
+import javax.sql.DataSource;
+
 import org.apache.logging.log4j.util.PropertiesUtil;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 
+import accelerate.commons.data.DataMap;
 import accelerate.commons.exception.ApplicationException;
-import accelerate.commons.util.CommonUtils;
 import accelerate.commons.util.ConfigurationUtils;
 import accelerate.commons.util.StringUtils;
 
@@ -22,17 +23,21 @@ import accelerate.commons.util.StringUtils;
  * configuration properties in the form of key-value pairs
  * </p>
  * <p>
- * The properties can also be defined in a database table and the user will have
- * to provide the data source and query via {@link DataMapCache} methods. The
- * query should ensure that the key column is the first column in the SELECT
- * clause followed by the value column. For more complex implementation refer to
- * {@link DataMapCache#recordFilter} / {@link DataMapCache#keyProvider} /
- * {@link DataMapCache#valueProvider}
+ * The properties can be read from a file viw HTTP URL/local file
+ * system/classpath. Currently Properties or YAML formats are supported.
  * </p>
  * <p>
- * Users also have the option of saving the properties for multiple environments
- * and profiles in the same table. All they need to do is to set the
- * {@link #profileName} property and it will be taken care of.
+ * Properties can also be pulled from a database table and the user will have to
+ * provide the data source and query via the
+ * {@link #setDataSourceAndQuery(DataSource, String)} method. The query should
+ * ensure that the key column is the first column in the SELECT clause followed
+ * by the value column. For more complex implementation refer to
+ * {@link DataMapCache#setDataProviders(DataSource, String, java.util.function.Function, java.util.function.Function)}
+ * </p>
+ * <p>
+ * The source (file/db table) can have properties for multiple environments.
+ * Just set the {@link #profileName} property and only those property prefixed
+ * by it will be loaded.
  * </p>
  * 
  * @version 1.0 Initial Version
@@ -61,6 +66,25 @@ public class PropertyCache extends DataMapCache<String> {
 	private String configURL;
 
 	/**
+	 * The attribute enables YAML parsing for {@link #configURL}.
+	 */
+	private boolean yamlMode;
+
+	/**
+	 * Name of the query column in
+	 * {@link #setDataSourceAndQuery(DataSource, String)} that contains the property
+	 * key. Defaults to "KEY"
+	 */
+	private String keyColumnName = "KEY";
+	
+	/**
+	 * Name of the query column in
+	 * {@link #setDataSourceAndQuery(DataSource, String)} that contains the property
+	 * value. Defaults to "VALUE"
+	 */
+	private String valueColumnName = "VALUE";
+
+	/**
 	 * Default Constructor
 	 *
 	 * @param aCacheName
@@ -70,7 +94,7 @@ public class PropertyCache extends DataMapCache<String> {
 	}
 
 	/**
-	 * Overloaded Constructor
+	 * Constructor to provide URL to load configuration from
 	 *
 	 * @param aCacheName
 	 * @param aConfigURL
@@ -78,6 +102,19 @@ public class PropertyCache extends DataMapCache<String> {
 	public PropertyCache(String aCacheName, String aConfigURL) {
 		this(aCacheName);
 		this.configURL = aConfigURL;
+	}
+
+	/**
+	 * Constructor to enable YAML source and provide URL to load configuration from
+	 *
+	 * @param aCacheName
+	 * @param aConfigURL
+	 * @param aEnableYAML
+	 */
+	public PropertyCache(String aCacheName, String aConfigURL, boolean aEnableYAML) {
+		this(aCacheName);
+		this.configURL = aConfigURL;
+		this.yamlMode = aEnableYAML;
 	}
 
 	/**
@@ -114,13 +151,13 @@ public class PropertyCache extends DataMapCache<String> {
 	 *                      property key
 	 * @return boolean result of the comparison
 	 */
-	public boolean isEnabled(String... aPropertyKeys) {
+	public boolean isTrue(String... aPropertyKeys) {
 		return hasValue(Boolean.TRUE.toString(), aPropertyKeys);
 	}
 
 	/**
-	 * This method creates a "." separated key from the array of tokens passed and
-	 * compares the property value against a user specified constant.
+	 * This method uses the {@link #get(String...)} method to get the property value
+	 * and checks if the value equals to aCompareValue
 	 *
 	 * @param aCompareValue value to be compared against
 	 * @param aPropertyKeys array of strings to be concatenated to form the property
@@ -128,7 +165,7 @@ public class PropertyCache extends DataMapCache<String> {
 	 * @return boolean result of the comparison
 	 */
 	public boolean hasValue(String aCompareValue, String... aPropertyKeys) {
-		return CommonUtils.compare(get(aPropertyKeys), aCompareValue);
+		return StringUtils.equals(get(aPropertyKeys), aCompareValue);
 	}
 
 	/*
@@ -141,37 +178,49 @@ public class PropertyCache extends DataMapCache<String> {
 	 */
 	@Override
 	protected void loadCache() throws ApplicationException {
-		final String prefix = StringUtils.isEmpty(this.profileName) ? EMPTY_STRING : this.profileName + PERIOD;
-		final int prefixLength = prefix.length();
+		final boolean profileEnabled = !StringUtils.isEmpty(this.profileName);
+		final String profilePrefix = profileEnabled ? this.profileName + PERIOD : EMPTY_STRING;
+		final int prefixLength = profileEnabled ? profilePrefix.length() : 0;
 
 		if (!StringUtils.isEmpty(this.configURL)) {
-			ConfigurationUtils.loadPropertyFile(this.configURL).forEach((aKey, aValue) -> {
-				if (aKey.startsWith(prefix)) {
-					put(aKey.substring(prefixLength), (String) aValue);
-				}
-			});
+			DataMap configMap = this.yamlMode ? ConfigurationUtils.loadYAMLFile(this.configURL)
+					: ConfigurationUtils.loadPropertyFile(this.configURL);
+			configMap.entrySet().parallelStream()
+					.filter(aEntry -> profileEnabled ? aEntry.getKey().startsWith(profilePrefix) : true)
+					.forEach(aEntry -> put(aEntry.getKey().substring(prefixLength), (String) aEntry.getValue()));
+
 		}
 
-		/*
-		 * If configQuery is not set or db loading is disabled in the property file then
-		 * skip loading properties from database.
-		 */
-		if (!StringUtils.isEmpty(this.dataQuery)) {
-			/*
-			 * Query the database
-			 */
-			JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSource);
-			jdbcTemplate.query(this.dataQuery, (aResultSet, aRowNum) -> {
-				String key = aResultSet.getString(1);
-				if (key.startsWith(prefix)) {
-					put(key.substring(prefixLength), aResultSet.getString(2));
-				}
+		super.loadCache();
+	}
 
-				return null;
-			});
-		}
+	/**
+	 * @param aDataSource
+	 * @param aDataQuery
+	 */
+	public void setDataSourceAndQuery(DataSource aDataSource, String aDataQuery) {
+		super.setDataProviders(aDataSource, aDataQuery, aRowData -> aRowData.get(this.keyColumnName).toString(),
+				aRowData -> aRowData.get(this.valueColumnName).toString());
+	}
 
-		setCacheAge(get("cacheAge"));
+	/**
+	 * Getter method for "profileName" property
+	 *
+	 * @return profileName
+	 */
+	@ManagedAttribute
+	public String getProfileName() {
+		return this.profileName;
+	}
+
+	/**
+	 * Setter method for "profileName" property
+	 *
+	 * @param aProfileName
+	 */
+	@ManagedAttribute
+	public void setProfileName(String aProfileName) {
+		this.profileName = aProfileName;
 	}
 
 	/**
@@ -195,22 +244,56 @@ public class PropertyCache extends DataMapCache<String> {
 	}
 
 	/**
-	 * Getter method for "profileName" property
-	 *
-	 * @return profileName
+	 * Getter method for "yamlMode" property
+	 * 
+	 * @return yamlMode
 	 */
-	@ManagedAttribute
-	public String getProfileName() {
-		return this.profileName;
+	public boolean isYamlMode() {
+		return this.yamlMode;
 	}
 
 	/**
-	 * Setter method for "profileName" property
-	 *
-	 * @param aProfileName
+	 * Setter method for "yamlMode" property
+	 * 
+	 * @param aYamlMode
 	 */
-	@ManagedAttribute
-	public void setProfileName(String aProfileName) {
-		this.profileName = aProfileName;
+	public void setYamlMode(boolean aYamlMode) {
+		this.yamlMode = aYamlMode;
+	}
+
+	/**
+	 * Getter method for "keyColumnName" property
+	 * 
+	 * @return keyColumnName
+	 */
+	public String getKeyColumnName() {
+		return this.keyColumnName;
+	}
+
+	/**
+	 * Setter method for "keyColumnName" property
+	 * 
+	 * @param aKeyColumnName
+	 */
+	public void setKeyColumnName(String aKeyColumnName) {
+		this.keyColumnName = aKeyColumnName;
+	}
+
+	/**
+	 * Getter method for "valueColumnName" property
+	 * 
+	 * @return valueColumnName
+	 */
+	public String getValueColumnName() {
+		return this.valueColumnName;
+	}
+
+	/**
+	 * Setter method for "valueColumnName" property
+	 * 
+	 * @param aValueColumnName
+	 */
+	public void setValueColumnName(String aValueColumnName) {
+		this.valueColumnName = aValueColumnName;
 	}
 }

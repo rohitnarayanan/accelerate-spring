@@ -35,7 +35,7 @@ public class SpringBootAspect {
 	/**
 	 * The base-packages for the application
 	 */
-	@Value("${com.walgreens.springboot.base-packages:com.walgreens}")
+	@Value("${accelerate.spring.base-packages:accelerate}")
 	private String[] basePackages;
 
 	/**
@@ -46,7 +46,7 @@ public class SpringBootAspect {
 
 	/**
 	 * This method intercepts all method call in the application. It then filters
-	 * the ones that are inside 'com.walgreens.springboot.base-packages' and allows
+	 * the ones that are inside 'accelerate.spring.base-packages' and allows
 	 * all MethodInterceptor(ss.
 	 * 
 	 * @param aJoinPoint the {@link JoinPoint} caught by the {@link Around} advice

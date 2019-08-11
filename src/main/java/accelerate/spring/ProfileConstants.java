@@ -9,9 +9,8 @@ package accelerate.spring;
  */
 @SuppressWarnings("javadoc")
 public class ProfileConstants {
-	public static final String PROFILE_LOGGING = "accelerate.spring.profiles.logging";
-	public static final String PROFILE_WEB = "accelerate.spring.profiles.web";
-	public static final String PROFILE_SECURITY = "accelerate.spring.profiles.security";
-	public static final String PROFILE_NO_SECURITY = "accelerate.spring.profiles.nosecurity";
+	public static final String PROFILE_LOGGING = "accelerate.spring.logging";
+	public static final String PROFILE_WEB = "accelerate.spring.web";
+	public static final String PROFILE_SECURITY = "accelerate.spring.security";
 
 }

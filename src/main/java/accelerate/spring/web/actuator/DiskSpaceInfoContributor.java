@@ -1,4 +1,4 @@
-package accelerate.spring.web.actuator.info;
+package accelerate.spring.web.actuator;
 
 import java.io.File;
 import java.util.Arrays;
@@ -6,21 +6,22 @@ import java.util.stream.Collectors;
 
 import org.springframework.boot.actuate.info.Info.Builder;
 import org.springframework.boot.actuate.info.InfoContributor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import accelerate.commons.data.DataMap;
+import accelerate.spring.ProfileConstants;
 
 /**
- * {@link InfoContributor} to provide diskspace information
+ * {@link InfoContributor} to provide disk space information
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan
  * @since October 22, 2018
  */
+@Profile(ProfileConstants.PROFILE_WEB)
 @ConditionalOnWebApplication
-@ConditionalOnExpression("#{'${accelerate.spring.web.actuator.info.diskspace:${accelerate.spring.defaults:disabled}}' == 'enabled'}")
 @Component
 public class DiskSpaceInfoContributor implements InfoContributor {
 	/*
@@ -34,7 +35,7 @@ public class DiskSpaceInfoContributor implements InfoContributor {
 	 */
 	@Override
 	public void contribute(Builder aBuilder) {
-		DataMap<Object> dataMap = new DataMap<>();
+		DataMap dataMap = DataMap.newMap();
 
 		/*
 		 * File system information

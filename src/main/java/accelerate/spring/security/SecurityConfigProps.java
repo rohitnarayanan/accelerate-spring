@@ -3,7 +3,7 @@ package accelerate.spring.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.walgreens.springboot.config.ConfigProps;
+import accelerate.spring.config.ConfigProps;
 
 /**
  * Bean class to hold security configuration properties
@@ -18,43 +18,43 @@ public class SecurityConfigProps {
 	/**
 	 * URL patterns to be omitted from security
 	 */
-	@Value("${com.walgreens.springboot.security.url-patterns.ignored:}")
+	@Value("${accelerate.spring.security.url-patterns.ignored:}")
 	private String[] urlPatternsIgnored;
 
 	/**
 	 * URL patterns to be allowed for all
 	 */
-	@Value("${com.walgreens.springboot.security.url-patterns.allowed:}")
+	@Value("${accelerate.spring.security.url-patterns.allowed:}")
 	private String[] urlPatternsAllowed;
 
 	/**
 	 * Cookies to be cleared on logout
 	 */
-	@Value("${com.walgreens.springboot.security.logout.clear-cookies:}")
+	@Value("${accelerate.spring.security.logout.clear-cookies:}")
 	private String[] logoutClearCookies;
 
 	/**
 	 * URL to be redirected to after logout
 	 */
-	@Value("${com.walgreens.springboot.security.logout.success-url:/login?logout}")
+	@Value("${accelerate.spring.security.logout.success-url:/login?logout}")
 	private String logoutSuccessURL;
 
 	/**
 	 * Maximum number of sessions allowed for a user
 	 */
-	@Value("${com.walgreens.springboot.security.session.max-count:-1}")
+	@Value("${accelerate.spring.security.session.max-count:-1}")
 	private int sessionMaxCount;
 
 	/**
 	 * URL to be redirected on session expiry
 	 */
-	@Value("${com.walgreens.springboot.security.session.expired-url:/login?sessionExpired}")
+	@Value("${accelerate.spring.security.session.expired-url:/login?sessionExpired}")
 	private String sessionExpiredURL;
 
 	/**
 	 * Roles to be allowed access to actuator endpoints
 	 */
-	@Value("${com.walgreens.springboot.security.actuator.roles:}")
+	@Value("${accelerate.spring.security.actuator.roles:}")
 	private String[] actuatorRoles;
 
 	/**

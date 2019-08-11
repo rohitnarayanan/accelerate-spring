@@ -9,7 +9,7 @@ import accelerate.commons.data.DataBean;
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan
- * @since October 20, 2018
+ * @since October 3, 2017
  */
 public class WebRequest extends DataBean {
 	/**

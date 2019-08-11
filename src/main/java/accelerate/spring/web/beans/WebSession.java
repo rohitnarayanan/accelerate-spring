@@ -16,7 +16,7 @@ import accelerate.commons.data.DataBean;
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan
- * @since October 20, 2018
+ * @since December 11, 2017
  */
 public class WebSession extends DataBean implements HttpSessionBindingListener {
 	/**
@@ -54,9 +54,10 @@ public class WebSession extends DataBean implements HttpSessionBindingListener {
 	 */
 	public WebSession() {
 		this.initTime = new Date();
-		this.sessionId = RequestContextHolder.currentRequestAttributes().getSessionId();
+		if (RequestContextHolder.getRequestAttributes() != null) {
+			this.sessionId = RequestContextHolder.currentRequestAttributes().getSessionId();
+		}
 
-		setIdField("sessionId");
 		LOGGER.info("WebSession initialized for '{}' with id '{}' at '{}'", this.username, this.sessionId,
 				this.initTime);
 	}
@@ -106,15 +107,6 @@ public class WebSession extends DataBean implements HttpSessionBindingListener {
 	 */
 	public void setInitTime(Date aInitTime) {
 		this.initTime = aInitTime;
-	}
-
-	/**
-	 * Getter method for "sessionId" property
-	 * 
-	 * @return sessionId
-	 */
-	public String getSessionId() {
-		return this.sessionId;
 	}
 
 	/**

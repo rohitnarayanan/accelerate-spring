@@ -1,4 +1,4 @@
-package accelerate.spring.web.actuator.info;
+package accelerate.spring.web.actuator;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -7,11 +7,12 @@ import java.net.UnknownHostException;
 
 import org.springframework.boot.actuate.info.Info.Builder;
 import org.springframework.boot.actuate.info.InfoContributor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import accelerate.commons.data.DataMap;
+import accelerate.spring.ProfileConstants;
 
 /**
  * {@link InfoContributor} to provide host information
@@ -20,8 +21,8 @@ import accelerate.commons.data.DataMap;
  * @author Rohit Narayanan
  * @since October 22, 2018
  */
+@Profile(ProfileConstants.PROFILE_WEB)
 @ConditionalOnWebApplication
-@ConditionalOnExpression("#{'${accelerate.spring.web.actuator.info.host:${accelerate.spring.defaults:disabled}}' == 'enabled'}")
 @Component
 public class HostInfoContributor implements InfoContributor {
 	/*
@@ -35,7 +36,7 @@ public class HostInfoContributor implements InfoContributor {
 	 */
 	@Override
 	public void contribute(Builder aBuilder) {
-		DataMap<Object> dataMap = new DataMap<>();
+		DataMap dataMap = DataMap.newMap();
 
 		try {
 			InetAddress localhost = InetAddress.getLocalHost();

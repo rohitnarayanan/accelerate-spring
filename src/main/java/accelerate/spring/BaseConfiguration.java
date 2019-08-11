@@ -8,34 +8,23 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
-
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
 /**
  * Base configuration class for accelerate
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan
- * @since October 20, 2018
+ * @since April 23, 2018
  */
 @ComponentScan(basePackages = "accelerate")
 @EnableAspectJAutoProxy
@@ -54,12 +43,6 @@ public class BaseConfiguration extends SpringBootServletInitializer
 	 */
 	@Autowired
 	private Environment environment = null;
-
-	/**
-	 * Flag to indicate whether debug logs are enabled
-	 */
-	@Value("#{'${accelerate.spring.jackson.defaults:${accelerate.spring.defaults:disabled}}' == 'enabled'}")
-	private boolean jacksonDefaultsEnabled;
 
 	/*
 	 * (non-Javadoc)
@@ -117,38 +100,6 @@ public class BaseConfiguration extends SpringBootServletInitializer
 				throw new ApplicationContextException(errorMessage);
 			}
 		}
-
-//		if (activeProfiles.contains(ConfigConstants.PROFILE_EXTN_SECURITY_AUTHENTICATOR)) {
-//			if (!activeProfiles.contains(ConfigConstants.PROFILE_SECURITY)) {
-//				String errorMessage = "You have misconfigured your application! Base security profile '%s' is required to use authenticator profile '%s'. "
-//						+ "Update the spring.profiles.active property in your configuration file and retry";
-//				errorMessage = String.format(errorMessage, ConfigConstants.PROFILE_SECURITY,
-//						ConfigConstants.PROFILE_EXTN_SECURITY_AUTHENTICATOR);
-//
-//				LOGGER.error(errorMessage);
-//				throw new ApplicationContextException(errorMessage);
-//			}
-//		}
-	}
-
-	/**
-	 * @return
-	 */
-	@Order(1)
-	@Bean
-	public Jackson2ObjectMapperBuilderCustomizer jacksonCustomizer() {
-		return (aJackson2ObjectMapperBuilder) -> {
-			if (this.jacksonDefaultsEnabled) {
-				ObjectMapper mapper = new ObjectMapper();
-				mapper.setVisibility(PropertyAccessor.ALL, Visibility.NONE);
-				mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
-				aJackson2ObjectMapperBuilder.serializationInclusion(Include.NON_NULL);
-				aJackson2ObjectMapperBuilder.filters(
-						new SimpleFilterProvider().setDefaultFilter(SimpleBeanPropertyFilter.serializeAllExcept()));
-
-				aJackson2ObjectMapperBuilder.configure(mapper);
-			}
-		};
 	}
 
 	/**

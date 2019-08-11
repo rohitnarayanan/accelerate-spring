@@ -2,8 +2,7 @@
 apply plugin: "java-library"
 
 // apply standard java build configuration 
-apply from: "http://localproxy.localhost.com:4080/devops/java-build.gradle"
-
+apply from: "https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/master/java/java-build.gradle"
 
 /*
  * Dependencies
@@ -23,14 +22,15 @@ apply from: "http://localproxy.localhost.com:4080/devops/java-build.gradle"
 	api ("org.springframework.boot:spring-boot-starter-json")
 	api ("org.springframework.boot:spring-boot-starter-logging")
 	api ("org.springframework.boot:spring-boot-starter-jdbc")
-	
+	api ("org.springframework.boot:spring-boot-starter-cache")
 	
 	//-- other dependencies
 	api ("org.slf4j:slf4j-ext")
-	api ("ch.qos.logback.contrib:logback-json-classic:0.1.5")
-	api ("ch.qos.logback.contrib:logback-jackson:0.1.5")
-	implementation ("javax.servlet:javax.servlet-api")
-	implementation ("javax.servlet:jstl")
+	api ("org.apache.commons:commons-lang3")
+	//api ("ch.qos.logback.contrib:logback-json-classic:0.1.5")
+	//api ("ch.qos.logback.contrib:logback-jackson:0.1.5")
+	//implementation ("javax.servlet:javax.servlet-api")
+	//implementation ("javax.servlet:jstl")
 	
 	/*
 	 * runtime dependencies

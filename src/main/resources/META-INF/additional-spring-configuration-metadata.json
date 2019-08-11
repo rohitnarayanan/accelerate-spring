@@ -1,0 +1,126 @@
+{
+	"properties": [
+		{
+			"name": "accelerate.spring.defaults",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable default settings"
+		},
+		{
+			"name": "accelerate.spring.base-packages",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of base packages that are included in this application.'accelerate.spring' is included by default'"
+		},
+		{
+			"name": "accelerate.spring.logging.profiling",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable profiler logging. Defaults to value of 'accelerate.spring.defaults'"
+		},
+		{
+			"name": "accelerate.spring.security.url-patterns.ignored",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of URL patterns that should be ignored by Spring Security"
+		},
+		{
+			"name": "accelerate.spring.security.url-patterns.allowed",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of URL patterns that should be allowed for all by Spring Security"
+		},
+		{
+			"name": "accelerate.spring.security.logout.clear-cookies",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of cookies that should be cleared on logout"
+		},
+		{
+			"name": "accelerate.spring.security.logout.success-url",
+			"type": "java.lang.String",
+			"description": "URL to redirect the user to after logout. Spring default is /login?logout"
+		},
+		{
+			"name": "accelerate.spring.security.session.max-count",
+			"type": "java.lang.Integer",
+			"description": "Maximum number of sessions to be allowed in the application. Defaults to -1 which is unlimited"
+		},
+		{
+			"name": "accelerate.spring.security.session.expired-url",
+			"type": "java.lang.String",
+			"description": "URL to redirect the user if the session has expired. Defaults to /login?sessionExpired"
+		},
+		{
+			"name": "accelerate.spring.security.actuator.roles",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of roles that have access to actuator endpoints. Default is to allow all"
+		},
+		{
+			"name": "accelerate.spring.web.path.home",
+			"type": "java.lang.String",
+			"description": "Path to the home page of the application. This allows to redirect user from context root / to home page"
+		},
+		{
+			"name": "accelerate.spring.web.path.favicon",
+			"type": "java.lang.String",
+			"description": "Path to the favicon for the application which will be used on the default index and error pages."
+		},
+		{
+			"name": "accelerate.spring.web.default-view.index",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable default index page. Defaults to value of 'accelerate.spring.defaults'"
+		},
+		{
+			"name": "accelerate.spring.web.default-view.error",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable default error page. Defaults to value of 'accelerate.spring.defaults'"
+		},
+		{
+			"name": "accelerate.spring.web.api.prefix",
+			"type": "java.lang.String",
+			"description": "Path to map the utility Web APIs. Defaults to /webapi/*"
+		},
+		{
+			"name": "accelerate.spring.web.api.auth",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable AuthController. Defaults to value of 'accelerate.spring.defaults'"
+		},
+		{
+			"name": "accelerate.spring.web.api.cache",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable CacheController. Defaults to value of 'accelerate.spring.defaults'"
+		},
+		{
+			"name": "accelerate.spring.web.api.debug",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable DebugController. Defaults to value of 'accelerate.spring.defaults'"
+		},
+		{
+			"name": "accelerate.spring.web.api.files",
+			"type": "java.lang.Boolean",
+			"description": "Flag to enable/disable FilesController. Defaults to value of 'accelerate.spring.defaults'"
+		},
+		{
+			"name": "accelerate.spring.web.api.roles",
+			"type": "java.lang.String",
+			"description": "Comma separaed list of roles that should have access to Web APIs. Default is to allow all"
+		}
+	],
+	"hints": [
+		{
+			"name": "accelerate.spring.logging.level",
+			"values": [
+				{
+					"value": "TRACE"
+				},
+				{
+					"value": "DEBUG"
+				},
+				{
+					"value": "INFO"
+				},
+				{
+					"value": "WARN"
+				},
+				{
+					"value": "ERROR"
+				}
+			]
+		}
+	]
+}

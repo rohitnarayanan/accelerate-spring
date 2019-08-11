@@ -1,8 +1,6 @@
 package accelerate.spring.logging;
 
-import static com.walgreens.springboot.lang.CommonConstants.EMPTY_STRING;
-import static com.walgreens.springboot.lang.CommonConstants.PIPE_CHAR;
-import static com.walgreens.springboot.lang.CommonConstants.SPACE_CHAR;
+import static accelerate.commons.constant.CommonConstants.SPACE;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -21,12 +19,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
-import com.walgreens.springboot.aop.MethodInterceptor;
-import com.walgreens.springboot.config.BaseConfigProps;
-import com.walgreens.springboot.config.ConfigConstants;
-import com.walgreens.springboot.util.CommonUtils;
-import com.walgreens.springboot.util.JSONUtils;
-import com.walgreens.springboot.util.StringUtils;
+import accelerate.commons.constant.CommonConstants;
+import accelerate.commons.util.CommonUtils;
+import accelerate.commons.util.JacksonUtils;
+import accelerate.commons.util.StringUtils;
+import accelerate.spring.ProfileConstants;
+import accelerate.spring.aop.MethodInterceptor;
+import accelerate.spring.config.BaseConfigProps;
 
 /**
  * {@link MethodInterceptor} implementation to log {@link Profiler} information
@@ -38,8 +37,8 @@ import com.walgreens.springboot.util.StringUtils;
  * @author Rohit Narayanan
  * @since July 05, 2019
  */
-@Profile(ConfigConstants.PROFILE_LOGGING)
-@ConditionalOnExpression("${com.walgreens.springboot.logging.profiling:${com.walgreens.springboot.defaults:true}}")
+@Profile(ProfileConstants.PROFILE_LOGGING)
+@ConditionalOnExpression("${accelerate.spring.logging.profiling:${accelerate.spring.defaults:true}}")
 @Component
 @Aspect
 public class ProfilingLogger {
@@ -56,7 +55,7 @@ public class ProfilingLogger {
 	 */
 	@Around("@within(Profiled)")
 	public Object interceptMethod(ProceedingJoinPoint aJoinPoint) throws Throwable {
-		String[] signature = aJoinPoint.getSignature().toString().split(SPACE_CHAR);
+		String[] signature = StringUtils.split(aJoinPoint.getSignature().toString(), SPACE);
 
 		Object[] params = aJoinPoint.getArgs();
 		String returnType = signature[0];
@@ -152,11 +151,11 @@ public class ProfilingLogger {
 
 		try {
 			LOGGER.trace("{},{},[{}]", aMethod, "INPUT",
-					ObjectUtils.isEmpty(aParams) ? EMPTY_STRING
+					ObjectUtils.isEmpty(aParams) ? CommonConstants.EMPTY_STRING
 							: Arrays.stream(aParams)
-									.map(aParam -> isJSONSerializable(aParam) ? JSONUtils.serialize(aParam)
+									.map(aParam -> isJSONSerializable(aParam) ? JacksonUtils.toJSON(aParam)
 											: ObjectUtils.nullSafeToString(aParam))
-									.collect(Collectors.joining(PIPE_CHAR)));
+									.collect(Collectors.joining(CommonConstants.PIPE)));
 		} catch (Exception error) {
 			LOGGER.warn("Unable to log input parameters '{}' for {}", ObjectUtils.nullSafeToString(aParams), aMethod,
 					error);
@@ -179,8 +178,8 @@ public class ProfilingLogger {
 				LOGGER.trace("{},EXIT,{}", aMethod, CommonUtils.getErrorLog(aError));
 			} else {
 				LOGGER.trace("{},RETURN,{}", aMethod,
-						StringUtils.safeEquals("void", aReturnType) ? "VOID"
-								: isJSONSerializable(aReturnValue) ? JSONUtils.serialize(aReturnValue)
+						StringUtils.equals("void", aReturnType) ? "VOID"
+								: isJSONSerializable(aReturnValue) ? JacksonUtils.toJSON(aReturnValue)
 										: ObjectUtils.nullSafeToString(aReturnValue));
 			}
 		} catch (Exception error) {

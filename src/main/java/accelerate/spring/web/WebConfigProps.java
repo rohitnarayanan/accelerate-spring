@@ -3,7 +3,7 @@ package accelerate.spring.web;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.walgreens.springboot.config.ConfigProps;
+import accelerate.spring.config.ConfigProps;
 
 /**
  * Bean class to hold Web configuration properties
@@ -18,37 +18,37 @@ public class WebConfigProps {
 	/**
 	 * Path to the favicon for the application
 	 */
-	@Value("${com.walgreens.springboot.web.path.favicon:com/walgreens/springboot/favicon.ico}")
+	@Value("${accelerate.spring.web.path.favicon:}")
 	private String faviconPath;
 
 	/**
 	 * Home page of the application
 	 */
-	@Value("${com.walgreens.springboot.web.path.home:}")
+	@Value("${accelerate.spring.web.path.home:}")
 	private String homePath;
 
 	/**
 	 * Home page of the application
 	 */
-	@Value("${com.walgreens.springboot.web.api.path-prefix:/webapi}")
+	@Value("${accelerate.spring.web.api.path-prefix:/webapi}")
 	private String webAPIPathPrefix;
 
 	/**
 	 * Home page of the application
 	 */
-	@Value("${com.walgreens.springboot.web.api.roles:}")
+	@Value("${accelerate.spring.web.api.roles:}")
 	private String[] webAPIRoles;
 
 	/**
 	 * Flag to enable/disable {@link DefaultIndexPage}
 	 */
-	@Value("${com.walgreens.springboot.web.default-view.index:${com.walgreens.springboot.defaults:true}}")
+	@Value("${accelerate.spring.web.default-view.index:${accelerate.spring.defaults:true}}")
 	private boolean defaultViewIndex = false;
 
 	/**
 	 * Flag to enable/disable {@link DefaultErrorView}
 	 */
-	@Value("${com.walgreens.springboot.web.default-view.error:${com.walgreens.springboot.defaults:true}}")
+	@Value("${accelerate.spring.web.default-view.error:${accelerate.spring.defaults:true}}")
 	private boolean defaultViewError = false;
 
 	/**

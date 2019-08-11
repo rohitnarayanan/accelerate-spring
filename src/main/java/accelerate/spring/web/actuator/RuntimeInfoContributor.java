@@ -1,4 +1,4 @@
-package accelerate.spring.web.actuator.info;
+package accelerate.spring.web.actuator;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -6,12 +6,13 @@ import java.util.Date;
 
 import org.springframework.boot.actuate.info.Info.Builder;
 import org.springframework.boot.actuate.info.InfoContributor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import accelerate.commons.data.DataMap;
-import accelerate.commons.utils.DateTimeUtils;
+import accelerate.commons.util.DateTimeUtils;
+import accelerate.spring.ProfileConstants;
 
 /**
  * {@link InfoContributor} to provide runtime information
@@ -20,8 +21,8 @@ import accelerate.commons.utils.DateTimeUtils;
  * @author Rohit Narayanan
  * @since October 22, 2018
  */
+@Profile(ProfileConstants.PROFILE_WEB)
 @ConditionalOnWebApplication
-@ConditionalOnExpression("#{'${accelerate.spring.web.actuator.info.runtime:${accelerate.spring.defaults:disabled}}' == 'enabled'}")
 @Component
 public class RuntimeInfoContributor implements InfoContributor {
 	/*
@@ -35,7 +36,7 @@ public class RuntimeInfoContributor implements InfoContributor {
 	 */
 	@Override
 	public void contribute(Builder aBuilder) {
-		DataMap<Object> dataMap = new DataMap<>();
+		DataMap dataMap = DataMap.newMap();
 
 		/*
 		 * Runtime information

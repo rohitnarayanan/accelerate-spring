@@ -65,8 +65,7 @@ public class AccelerateSpringTest {
 	@SuppressWarnings("static-method")
 	@Autowired
 	public void checkConfig(ObjectMapper aObjectMapper) throws JsonProcessingException {
-		DataBean value1 = new DataBean();
-		value1.put("key1", "value1");
+		DataBean value1 = DataBean.newBean("key1", "value1");
 		System.out.println(aObjectMapper.toString() + ">>>" + aObjectMapper.writeValueAsString(value1));
 	}
 
@@ -77,8 +76,7 @@ public class AccelerateSpringTest {
 	@SuppressWarnings("static-method")
 	@Autowired
 	public void checkConfig2(ObjectMapper aObjectMapper) throws JsonProcessingException {
-		DataBean value1 = new DataBean();
-		value1.put("key1", "value1");
+		DataBean value1 = DataBean.newBean("key1", "value1");
 		System.out.println(aObjectMapper.toString() + ">>>" + aObjectMapper.writeValueAsString(value1));
 	}
 
@@ -97,12 +95,10 @@ public class AccelerateSpringTest {
 	public static DataMapCache<DataBean> beanCache() {
 		DataMapCache<DataBean> beanCache = new DataMapCache<>("beanCache", DataBean.class);
 
-		DataBean value1 = new DataBean();
-		value1.put("key1", "value1");
+		DataBean value1 = DataBean.newBean("key1", "value1");
 		beanCache.put("key1", value1);
 
-		DataBean value2 = new DataBean();
-		value2.put("key2", "value2");
+		DataBean value2 = DataBean.newBean("key2", "value2");
 		beanCache.put("key2", value2);
 
 		return beanCache;

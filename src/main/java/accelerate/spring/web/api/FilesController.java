@@ -1,7 +1,5 @@
 package accelerate.spring.web.api;
 
-import static accelerate.commons.constants.CommonConstants.COMMA_CHAR;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,16 +10,20 @@ import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import accelerate.commons.constant.CommonConstants;
 import accelerate.commons.data.DataMap;
-import accelerate.commons.exceptions.ApplicationException;
-import accelerate.commons.utils.NIOUtils;
-import accelerate.commons.utils.StringUtils;
+import accelerate.commons.exception.ApplicationException;
+import accelerate.commons.util.NIOUtils;
+import accelerate.commons.util.StringUtils;
+import accelerate.spring.ProfileConstants;
+import accelerate.spring.logging.Profiled;
 
 /**
  * {@link RestController} providing API for file operations
@@ -30,19 +32,21 @@ import accelerate.commons.utils.StringUtils;
  * @author Rohit Narayanan
  * @since October 20, 2018
  */
+@Profile(ProfileConstants.PROFILE_WEB)
 @ConditionalOnWebApplication
-@ConditionalOnExpression("#{'${accelerate.spring.web.api.files:${accelerate.spring.defaults:disabled}}' == 'enabled'}")
+@ConditionalOnExpression("${accelerate.spring.web.api.files:${accelerate.spring.defaults:true}}")
 @RestController
-@RequestMapping(path = "${accelerate.spring.web.api.base-path:/webapi}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(path = "${accelerate.spring.web.api:/webapi}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+@Profiled
 public class FilesController {
 	/**
 	 * @param aPathString
 	 * @return
 	 */
 	@RequestMapping(method = RequestMethod.GET)
-	public static DataMap<Object> list(@RequestParam(name = "path") String aPathString) {
+	public static DataMap list(@RequestParam(name = "path") String aPathString) {
 		final Path dirPath = Paths.get(aPathString);
-		final DataMap<Object> dataMap = DataMap.newMap();
+		final DataMap dataMap = DataMap.newMap();
 
 		dataMap.put("path", aPathString);
 		if (Files.exists(dirPath)) {
@@ -72,11 +76,11 @@ public class FilesController {
 	 * @return
 	 */
 	@RequestMapping(method = RequestMethod.DELETE)
-	public static DataMap<Object> delete(@RequestParam(name = "path") String aPathString,
+	public static DataMap delete(@RequestParam(name = "path") String aPathString,
 			@RequestParam(name = "files", required = false) String aFileNames) {
 		final Path dirPath = Paths.get(aPathString);
 
-		Map<String, Boolean> deleteMap = Arrays.stream(StringUtils.safeSplit(aFileNames, COMMA_CHAR))
+		Map<String, Boolean> deleteMap = Arrays.stream(StringUtils.split(aFileNames, CommonConstants.COMMA))
 				.map(aFileName -> dirPath.resolve(aFileName))
 				.collect(Collectors.toMap(aPath -> NIOUtils.getFileName(aPath), aPath -> {
 					try {
@@ -88,7 +92,7 @@ public class FilesController {
 					return Files.exists(aPath);
 				}));
 
-		DataMap<Object> dataMap = list(aPathString);
+		DataMap dataMap = list(aPathString);
 		dataMap.put("deleted", deleteMap);
 		return dataMap;
 	}

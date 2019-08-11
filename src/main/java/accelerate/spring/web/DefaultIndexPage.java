@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.walgreens.springboot.config.ConfigConstants;
-import com.walgreens.springboot.logging.Profiled;
+import accelerate.spring.ProfileConstants;
+import accelerate.spring.logging.Profiled;
 
 /**
  * {@link RestController} providing API for monitoring information
@@ -25,9 +25,9 @@ import com.walgreens.springboot.logging.Profiled;
  * @author Rohit Narayanan
  * @since May 16, 2018
  */
-@Profile(ConfigConstants.PROFILE_WEB)
+@Profile(ProfileConstants.PROFILE_WEB)
 @ConditionalOnWebApplication
-@ConditionalOnExpression("${com.walgreens.springboot.web.default-view.index:${com.walgreens.springboot.defaults:true}}")
+@ConditionalOnExpression("${accelerate.spring.web.default-view.index:${accelerate.spring.defaults:true}}")
 @Controller
 @Profiled
 public class DefaultIndexPage {

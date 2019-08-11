@@ -11,17 +11,12 @@ import org.springframework.security.config.core.GrantedAuthorityDefaults;
  */
 public class SecurityConstants {
 	/**
-	 * Default principal assigned to a new/unauthenticated user
-	 */
-	public static final String AUTH_DEFAULT_USER = "wag-user";
-
-	/**
-	 * WebRequest attribute storing the authenticator login status
-	 */
-	public static final String AUTH_LOGIN_STATUS = "authLoginStatus";
-
-	/**
 	 * Role prefix used by {@link GrantedAuthorityDefaults}
 	 */
 	public static final String ROLE_PREFIX = "ROLE_";
+
+	/**
+	 * Wilcard pattern to match all relative URLs
+	 */
+	public static final String WILDCARD_PATTERN_URL_SUFFIX = "/**";
 }

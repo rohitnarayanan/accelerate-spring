@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import accelerate.commons.constants.CommonConstants;
+import accelerate.commons.constant.CommonConstants;
+import accelerate.spring.ProfileConstants;
 import accelerate.spring.cache.DataMapCache;
+import accelerate.spring.logging.Profiled;
 
 /**
  * {@link RestController} providing API for HTTP debugging
@@ -25,10 +28,12 @@ import accelerate.spring.cache.DataMapCache;
  * @author Rohit Narayanan
  * @since October 20, 2018
  */
+@Profile(ProfileConstants.PROFILE_WEB)
 @ConditionalOnWebApplication
-@ConditionalOnExpression("#{'${accelerate.spring.web.api.cache:${accelerate.spring.defaults:disabled}}' == 'enabled'}")
+@ConditionalOnExpression("${accelerate.spring.web.api.cache:${accelerate.spring.defaults:true}}")
 @RestController
-@RequestMapping(path = "${accelerate.spring.web.api.base-path:/webapi}/cache", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(path = "${accelerate.spring.web.api:/webapi}/cache", produces = MediaType.APPLICATION_JSON_VALUE)
+@Profiled
 public class CacheController {
 	/**
 	 * {@link ApplicationContext} instance
@@ -41,12 +46,16 @@ public class CacheController {
 	 */
 	@RequestMapping(method = RequestMethod.GET, path = "/list")
 	public @ResponseBody String listCaches() {
-		StringBuilder buffer = new StringBuilder(CommonConstants.SQ_BRACKET_CHAR_OPEN);
+		StringBuilder buffer = new StringBuilder();
 
 		this.context.getBeansOfType(DataMapCache.class).values()
-				.forEach(aCache -> buffer.append(aCache.toJSON()).append(CommonConstants.COMMA_CHAR));
+				.forEach(aCache -> buffer.append(aCache.toString()).append(CommonConstants.COMMA));
 
-		return buffer.replace(buffer.length() - 1, buffer.length(), CommonConstants.SQ_BRACKET_CHAR_CLOSE).toString();
+		if (buffer.length() == 0) {
+			return "[]";
+		}
+
+		return buffer.insert(0, CommonConstants.SQ_BRACKET_OPEN).append(CommonConstants.SQ_BRACKET_CLOSE).toString();
 	}
 
 	/**
@@ -85,9 +94,11 @@ public class CacheController {
 
 	/**
 	 * @param aCacheName
+	 * @return
 	 */
 	@RequestMapping(method = RequestMethod.PUT, path = "/{cacheName}/refresh")
-	public void refreshCache(@PathVariable(name = "cacheName", required = true) String aCacheName) {
+	public @ResponseBody String refreshCache(@PathVariable(name = "cacheName", required = true) String aCacheName) {
 		this.context.getBean(aCacheName, DataMapCache.class).refresh();
+		return this.context.getBean(aCacheName, DataMapCache.class).toString();
 	}
 }

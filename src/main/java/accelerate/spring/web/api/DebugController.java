@@ -9,32 +9,37 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import accelerate.commons.data.DataMap;
-import accelerate.commons.utils.WebUtils;
+import accelerate.spring.ProfileConstants;
+import accelerate.spring.logging.Profiled;
+import accelerate.spring.web.WebUtils;
 
 /**
  * {@link RestController} providing API for HTTP debugging
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan
- * @since October 20, 2018
+ * @since October 3, 2017
  */
+@Profile(ProfileConstants.PROFILE_WEB)
 @ConditionalOnWebApplication
-@ConditionalOnExpression("#{'${accelerate.spring.web.api.debug:${accelerate.spring.defaults:disabled}}' == 'enabled'}")
+@ConditionalOnExpression("${accelerate.spring.web.api.debug:${accelerate.spring.defaults:true}}")
 @RestController
-@RequestMapping(path = "${accelerate.spring.web.api.base-path:/webapi}/debug", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(path = "${accelerate.spring.web.api:/webapi}/debug", produces = MediaType.APPLICATION_JSON_VALUE)
+@Profiled
 public class DebugController {
 	/**
 	 * @param aRequest
 	 * @return
 	 */
 	@RequestMapping(method = RequestMethod.GET, path = "/request")
-	public static DataMap<Object> debugRequest(HttpServletRequest aRequest) {
+	public static DataMap debugRequest(HttpServletRequest aRequest) {
 		return WebUtils.debugRequest(aRequest);
 	}
 
@@ -43,7 +48,7 @@ public class DebugController {
 	 * @return
 	 */
 	@RequestMapping(method = RequestMethod.GET, path = "/request/deep")
-	public static DataMap<Object> debugRequestDeep(HttpServletRequest aRequest) {
+	public static DataMap debugRequestDeep(HttpServletRequest aRequest) {
 		return WebUtils.debugRequestDeep(aRequest);
 	}
 
@@ -52,15 +57,13 @@ public class DebugController {
 	 * @return
 	 */
 	@RequestMapping(method = RequestMethod.GET, path = "/session")
-	public static DataMap<Object> debugSession(HttpServletRequest aRequest) {
-		DataMap<Object> dataMap = DataMap.newMap();
-
+	public static DataMap debugSession(HttpServletRequest aRequest) {
 		HttpSession session = aRequest.getSession(false);
 		if (session == null) {
-			return dataMap;
+			return null;
 		}
 
-		dataMap.put("id", session.getId());
+		DataMap dataMap = DataMap.newMap().putAnd("id", session.getId());
 
 		Map<Object, Object> attributeMap = Collections.list(session.getAttributeNames()).stream()
 				.map(name -> new Object[] { name, session.getAttribute(name) })

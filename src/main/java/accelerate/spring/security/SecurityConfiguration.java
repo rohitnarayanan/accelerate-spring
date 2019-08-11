@@ -1,6 +1,6 @@
 package accelerate.spring.security;
 
-import static com.walgreens.springboot.lang.CommonConstants.MATCH_ALL_URL_SUFFIX;
+import static accelerate.spring.security.SecurityConstants.WILDCARD_PATTERN_URL_SUFFIX;
 
 import javax.annotation.PostConstruct;
 
@@ -24,9 +24,9 @@ import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.util.ObjectUtils;
 
-import com.walgreens.springboot.config.ConfigConstants;
-import com.walgreens.springboot.logging.Profiled;
-import com.walgreens.springboot.web.api.AuthController;
+import accelerate.spring.ProfileConstants;
+import accelerate.spring.logging.Profiled;
+import accelerate.spring.web.api.AuthController;
 
 /**
  * {@link WebSecurityConfigurerAdapter} extension for base security
@@ -35,11 +35,11 @@ import com.walgreens.springboot.web.api.AuthController;
  * @author Rohit Narayanan
  * @since April 23, 2018
  */
-@Profile(ConfigConstants.PROFILE_SECURITY)
+@Profile(ProfileConstants.PROFILE_SECURITY)
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
 @Profiled
-public class SpringBootSecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	/**
 	 * {@link SecurityConfigProps} instance
 	 */
@@ -129,7 +129,7 @@ public class SpringBootSecurityConfig extends WebSecurityConfigurerAdapter {
 		 * Setup actuator security, if configured
 		 */
 		if (!ObjectUtils.isEmpty(this.securityConfigProps.getActuatorRoles())) {
-			aHttpSecurity.authorizeRequests().antMatchers(this.actuatorPath + MATCH_ALL_URL_SUFFIX)
+			aHttpSecurity.authorizeRequests().antMatchers(this.actuatorPath + WILDCARD_PATTERN_URL_SUFFIX)
 					.hasAnyRole(this.securityConfigProps.getActuatorRoles());
 		}
 
@@ -143,7 +143,7 @@ public class SpringBootSecurityConfig extends WebSecurityConfigurerAdapter {
 		/*
 		 * allow access to error pages
 		 */
-		aHttpSecurity.authorizeRequests().antMatchers(this.errorPath + MATCH_ALL_URL_SUFFIX).permitAll();
+		aHttpSecurity.authorizeRequests().antMatchers(this.errorPath + WILDCARD_PATTERN_URL_SUFFIX).permitAll();
 
 		/*
 		 * protect all other URLs
@@ -167,11 +167,11 @@ public class SpringBootSecurityConfig extends WebSecurityConfigurerAdapter {
 		/*
 		 * allow sub modules to configure
 		 */
-//		for (SecurityConfigurer configurer : this.securityConfigurers) {
-//			configurer.configure(aAuthenticationManagerBuilder);
-//		}
+		for (SecurityConfigurer configurer : this.securityConfigurers) {
+			configurer.configure(aAuthenticationManagerBuilder);
+		}
 
-		defaultAuthentication(aAuthenticationManagerBuilder);
+//		defaultAuthentication(aAuthenticationManagerBuilder);
 	}
 
 	/*
@@ -255,5 +255,5 @@ public class SpringBootSecurityConfig extends WebSecurityConfigurerAdapter {
 	/**
 	 * {@link Logger} instance
 	 */
-	private static final Logger LOGGER = LoggerFactory.getLogger(SpringBootSecurityConfig.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfiguration.class);
 }

@@ -1,17 +1,19 @@
-package accelerate.spring.web.actuator.info;
+package accelerate.spring.web.actuator;
 
 import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info.Builder;
 import org.springframework.boot.actuate.info.InfoContributor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import accelerate.commons.data.DataMap;
+import accelerate.spring.ProfileConstants;
 
 /**
  * {@link InfoContributor} to provide memory information
@@ -20,14 +22,14 @@ import accelerate.commons.data.DataMap;
  * @author Rohit Narayanan
  * @since October 22, 2018
  */
+@Profile(ProfileConstants.PROFILE_WEB)
 @ConditionalOnWebApplication
-@ConditionalOnExpression("#{'${accelerate.spring.web.actuator.info.memory:${accelerate.spring.defaults:disabled}}' == 'enabled'}")
 @Component
 public class MemoryInfoContributor implements InfoContributor {
 	/**
 	 * Flag to toggle verbose heap information
 	 */
-//	@Value("${accelerate.spring.web.actuator.info.memory.verbose:false}")
+	@Value("${accelerate.spring.web.actuator.info.memory.verbose:false}")
 	private Boolean verbose = true;
 
 	/*
@@ -41,7 +43,7 @@ public class MemoryInfoContributor implements InfoContributor {
 	 */
 	@Override
 	public void contribute(Builder aBuilder) {
-		DataMap<Object> dataMap = new DataMap<>();
+		DataMap dataMap = DataMap.newMap();
 
 		Runtime runtime = Runtime.getRuntime();
 		MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();

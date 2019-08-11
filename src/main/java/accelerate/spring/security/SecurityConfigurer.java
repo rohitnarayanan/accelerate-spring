@@ -13,13 +13,13 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
  */
 public interface SecurityConfigurer {
 	/**
-	 * Override this method to get a handle to the {@link SpringBootSecurityConfig}
+	 * Override this method to get a handle to the {@link SecurityConfiguration}
 	 * instance
 	 * 
 	 * @param aBaseSecurityConfig
 	 * @throws Exception
 	 */
-	default void initialize(@SuppressWarnings("unused") SpringBootSecurityConfig aBaseSecurityConfig) throws Exception {
+	default void initialize(@SuppressWarnings("unused") SecurityConfiguration aBaseSecurityConfig) throws Exception {
 		// default implementation
 	}
 
