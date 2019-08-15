@@ -14,6 +14,8 @@ import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.servlet.HandlerMapping;
 
 import accelerate.commons.constant.CommonConstants;
 import accelerate.commons.data.DataMap;
@@ -28,6 +30,19 @@ import accelerate.commons.util.StringUtils;
  * @since October 3, 2017
  */
 public class WebUtils {
+	/**
+	 * @param aRequest {@link HttpServletRequest} instance
+	 * @return
+	 */
+	public static final String extractPathFromPattern(HttpServletRequest aRequest) {
+		String path = (String) aRequest.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+		String bestMatchPattern = (String) aRequest.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+		String finalPath = new AntPathMatcher().extractPathWithinPattern(bestMatchPattern, path);
+
+		LOGGER.debug("Extracted path [{}] from URL[{}] for pattern [{}]", finalPath, aRequest.getRequestURI(), path);
+		return finalPath;
+	}
+
 	/**
 	 * @param aRequest
 	 * @return

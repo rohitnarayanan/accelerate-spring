@@ -1,6 +1,7 @@
 package accelerate.spring.web.api;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import accelerate.commons.constant.CommonConstants;
+import accelerate.commons.data.DataMap;
 import accelerate.spring.ProfileConstants;
 import accelerate.spring.cache.DataMapCache;
 import accelerate.spring.logging.Profiled;
@@ -46,16 +48,15 @@ public class CacheController {
 	 */
 	@RequestMapping(method = RequestMethod.GET, path = "/list")
 	public @ResponseBody String listCaches() {
-		StringBuilder buffer = new StringBuilder();
+		String mapList = this.context.getBeansOfType(DataMapCache.class).values().stream()
+				.map(aCache -> aCache.toString()).collect(Collectors.joining(CommonConstants.COMMA));
 
-		this.context.getBeansOfType(DataMapCache.class).values()
-				.forEach(aCache -> buffer.append(aCache.toString()).append(CommonConstants.COMMA));
-
-		if (buffer.length() == 0) {
+		if (mapList.length() == 0) {
 			return "[]";
 		}
 
-		return buffer.insert(0, CommonConstants.SQ_BRACKET_OPEN).append(CommonConstants.SQ_BRACKET_CLOSE).toString();
+		return new StringBuilder(CommonConstants.SQ_BRACKET_OPEN).append(mapList)
+				.append(CommonConstants.SQ_BRACKET_CLOSE).toString();
 	}
 
 	/**
@@ -69,36 +70,59 @@ public class CacheController {
 
 	/**
 	 * @param aCacheName
-	 * @param aKey
-	 * @return
-	 */
-	@RequestMapping(method = RequestMethod.GET, path = "/{cacheName}/get")
-	public Object getCachedValue(@PathVariable(name = "cacheName", required = true) String aCacheName,
-			@RequestParam(name = "key", required = true) String aKey) {
-		return this.context.getBean(aCacheName, DataMapCache.class).get(aKey);
-	}
-
-	/**
-	 * @param aCacheName
-	 * @param aKey
-	 * @param aJSONValue
-	 * @return
-	 */
-	@RequestMapping(method = { RequestMethod.POST, RequestMethod.PUT }, path = "/{cacheName}/put")
-	public Object addToCache(@PathVariable(name = "cacheName", required = true) String aCacheName,
-			@RequestParam(name = "key", required = true) String aKey, @RequestBody(required = true) String aJSONValue) {
-		DataMapCache<?> cache = this.context.getBean(aCacheName, DataMapCache.class);
-		cache.putJSON(aKey, aJSONValue);
-		return cache.get(aKey);
-	}
-
-	/**
-	 * @param aCacheName
 	 * @return
 	 */
 	@RequestMapping(method = RequestMethod.PUT, path = "/{cacheName}/refresh")
 	public @ResponseBody String refreshCache(@PathVariable(name = "cacheName", required = true) String aCacheName) {
 		this.context.getBean(aCacheName, DataMapCache.class).refresh();
 		return this.context.getBean(aCacheName, DataMapCache.class).toString();
+	}
+
+	/**
+	 * @param aCacheName
+	 * @param aKey
+	 * @return
+	 */
+	@RequestMapping(method = RequestMethod.GET, path = "/{cacheName}")
+	public Object get(@PathVariable(name = "cacheName", required = true) String aCacheName,
+			@RequestParam(name = "key", required = true) String aKey) {
+		Object value = this.context.getBean(aCacheName, DataMapCache.class).get(aKey);
+		return jsonValue(aKey, value);
+	}
+
+	/**
+	 * @param aCacheName
+	 * @param aKey
+	 * @param aValue
+	 * @return
+	 */
+	@RequestMapping(method = { RequestMethod.POST, RequestMethod.PUT }, path = "/{cacheName}")
+	public Object put(@PathVariable(name = "cacheName", required = true) String aCacheName,
+			@RequestParam(name = "key", required = true) String aKey, @RequestBody(required = true) String aValue) {
+		DataMapCache<?> cache = this.context.getBean(aCacheName, DataMapCache.class);
+		cache.putJSON(aKey, aValue);
+		return jsonValue(aKey, cache.get(aKey));
+	}
+
+	/**
+	 * @param aCacheName
+	 * @param aKey
+	 * @return
+	 */
+	@RequestMapping(method = { RequestMethod.DELETE }, path = "/{cacheName}")
+	public Object delete(@PathVariable(name = "cacheName", required = true) String aCacheName,
+			@RequestParam(name = "key", required = true) String aKey) {
+		DataMapCache<?> cache = this.context.getBean(aCacheName, DataMapCache.class);
+		Object value = cache.remove(aKey);
+		return jsonValue(aKey, value);
+	}
+
+	/**
+	 * @param aKey
+	 * @param aValue
+	 * @return
+	 */
+	private static Object jsonValue(String aKey, Object aValue) {
+		return (aValue instanceof String) ? DataMap.newMap(aKey, aValue) : aValue;
 	}
 }

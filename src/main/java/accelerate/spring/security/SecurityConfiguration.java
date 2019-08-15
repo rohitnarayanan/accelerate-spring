@@ -116,7 +116,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		 * Session management settings
 		 */
 		aHttpSecurity.sessionManagement().maximumSessions(this.securityConfigProps.getSessionMaxCount())
-				.expiredUrl(this.securityConfigProps.getSessionExpiredURL());
+				.sessionRegistry(sessionRegistry()).expiredUrl(this.securityConfigProps.getSessionExpiredURL());
 
 		/*
 		 * Setup allowed URL patterns, if configured

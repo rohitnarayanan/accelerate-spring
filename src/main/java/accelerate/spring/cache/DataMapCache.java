@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
@@ -157,14 +156,14 @@ public class DataMapCache<V> implements Serializable {
 	 * @throws ApplicationException wrapping all possible exceptions
 	 */
 	@PostConstruct
-	public void initialize() {
+	private void initialize() {
 		Assert.state(this.cacheStatus == CacheStatus.NEW, "Cache already initialized");
 
 		Profiler profiler = LogUtils.startProfiler(this.cacheName + ".initialize", LOGGER);
 		try {
 			profiler.start("loadCache");
 
-			loadCache();
+			loadCache(this.cacheMap);
 
 			profiler.start("setup");
 
@@ -188,10 +187,12 @@ public class DataMapCache<V> implements Serializable {
 	 * This method fetches the data to be loaded into the cache, from the data
 	 * source. sub classes can override the method to load data from other sources
 	 * 
+	 * @param aCacheMap
+	 * 
 	 * @throws ApplicationException Allowing implementations to wrap exceptions in
 	 *                              one class
 	 */
-	protected void loadCache() throws ApplicationException {
+	protected void loadCache(DataMap aCacheMap) throws ApplicationException {
 		if (StringUtils.isEmpty(this.dataQuery)) {
 			return;
 		}
@@ -201,18 +202,14 @@ public class DataMapCache<V> implements Serializable {
 		 */
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSource);
 		List<Map<String, Object>> queryData = jdbcTemplate.queryForList(this.dataQuery);
-		Map<String, V> tempMap = queryData.parallelStream().filter(aRowMap -> this.recordFilter.apply(aRowMap))
-				.collect(Collectors.toMap(aRowMap -> this.keyProvider.apply(aRowMap),
-						aRowMap -> this.valueProvider.apply(aRowMap)));
-
-		this.cacheMap.clear();
-		this.cacheMap.putAll(tempMap);
+		queryData.parallelStream().filter(aRowMap -> this.recordFilter.apply(aRowMap))
+				.forEach(aRowMap -> aCacheMap.put(this.keyProvider.apply(aRowMap), this.valueProvider.apply(aRowMap)));
 	}
 
 	/**
 	 * This method refreshes the cache
 	 *
-	 * @throws ApplicationException thrown by {@link #loadCache()}
+	 * @throws ApplicationException thrown by {@link #loadCache(DataMap)}
 	 */
 	@ManagedOperation(description = "This method refreshes the cache")
 	public void refresh() throws ApplicationException {
@@ -221,7 +218,10 @@ public class DataMapCache<V> implements Serializable {
 		this.cacheStatus = CacheStatus.REFRESHING;
 
 		// reload the cache
-		loadCache();
+		DataMap tmpCache = DataMap.newMap();
+		loadCache(tmpCache);
+		this.cacheMap.clear();
+		this.cacheMap.putAll(tmpCache);
 
 		// update refresh time and age
 		this.cacheRefreshedTime = new Date();
@@ -255,11 +255,19 @@ public class DataMapCache<V> implements Serializable {
 	}
 
 	/**
-	 * This method returns the JSON form of value stored in cache against the given
-	 * key
+	 * @param aKey
+	 * @return
+	 */
+	public V remove(String aKey) {
+		return this.cacheMap.remove(aKey);
+	}
+
+	/**
+	 * This method returns the JSON form of value stored in cache. It uses
+	 * {@link JacksonUtils#toJSON(Object)} to serialize the value
 	 *
-	 * @param aKey key string to fetch value stored in the cache
-	 * @return value instance stored against the key
+	 * @param aKey Key to be looked up in the cache
+	 * @return JSON string for the value cached
 	 * @throws ApplicationException thrown by {@link JacksonUtils#toJSON(Object)}
 	 */
 	@ManagedOperation(description = "This method returns the JSON form of value stored in cache against the given key")
@@ -273,20 +281,92 @@ public class DataMapCache<V> implements Serializable {
 	}
 
 	/**
+	 * This method returns the XML form of value stored in cache. It uses
+	 * {@link JacksonUtils#toXML(Object)} to serialize the value
+	 *
+	 * @param aKey Key to be looked up in the cache
+	 * @return XML string for the value cached
+	 * @throws ApplicationException thrown by {@link JacksonUtils#toXML(Object)}
+	 */
+	@ManagedOperation(description = "This method returns the JSON form of value stored in cache against the given key")
+	public String getXML(String aKey) throws ApplicationException {
+		V value = get(aKey);
+		if (value == null) {
+			return EMPTY_STRING;
+		}
+
+		return JacksonUtils.toJSON(value);
+	}
+
+	/**
+	 * This method returns the YAML form of value stored in cache. It uses
+	 * {@link JacksonUtils#toYAML(Object)} to serialize the value
+	 *
+	 * @param aKey Key to be looked up in the cache
+	 * @return YAML string for the value cached
+	 * @throws ApplicationException thrown by {@link JacksonUtils#toYAML(Object)}
+	 */
+	@ManagedOperation(description = "This method returns the JSON form of value stored in cache against the given key")
+	public String getYAML(String aKey) throws ApplicationException {
+		V value = get(aKey);
+		if (value == null) {
+			return EMPTY_STRING;
+		}
+
+		return JacksonUtils.toJSON(value);
+	}
+
+	/**
 	 * This method stores the given key-value pair in cache after converting them
 	 *
-	 * @param aKey       Key to be added to the cache
-	 * @param aJSONValue JSON representation of Value to be stored in the cache.
+	 * @param aKey         Key to be added/updated in the cache
+	 * @param aStringValue JSON representation of Value to be stored in the cache.
 	 * @throws ApplicationException thrown by
 	 *                              {@link JacksonUtils#fromJSON(String, Class)}
 	 */
 	@ManagedOperation(description = "This method stores the given key-value pair in cache after converting them")
-	public void putJSON(String aKey, String aJSONValue) throws ApplicationException {
-		Assert.isTrue(!StringUtils.isEmpty(aJSONValue), "JSON value cannot be empty");
+	public void putJSON(String aKey, String aStringValue) throws ApplicationException {
+		Assert.isTrue(!StringUtils.isEmpty(aStringValue), "JSON value cannot be empty");
 		if (this.valueType == String.class) {
-			put(aKey, this.valueType.cast(aJSONValue));
+			put(aKey, this.valueType.cast(aStringValue));
 		} else {
-			put(aKey, JacksonUtils.fromJSON(aJSONValue, this.valueType));
+			put(aKey, JacksonUtils.fromJSON(aStringValue, this.valueType));
+		}
+	}
+
+	/**
+	 * This method stores the given key-value pair in cache after converting them
+	 *
+	 * @param aKey         Key to be added/updated in the cache
+	 * @param aStringValue XML representation of Value to be stored in the cache.
+	 * @throws ApplicationException thrown by
+	 *                              {@link JacksonUtils#fromXML(String, Class)}
+	 */
+	@ManagedOperation(description = "This method stores the given key-value pair in cache after converting them")
+	public void putXML(String aKey, String aStringValue) throws ApplicationException {
+		Assert.isTrue(!StringUtils.isEmpty(aStringValue), "XML value cannot be empty");
+		if (this.valueType == String.class) {
+			put(aKey, this.valueType.cast(aStringValue));
+		} else {
+			put(aKey, JacksonUtils.fromXML(aStringValue, this.valueType));
+		}
+	}
+
+	/**
+	 * This method stores the given key-value pair in cache after converting them
+	 *
+	 * @param aKey         Key to be added/updated in the cache
+	 * @param aStringValue YAML representation of Value to be stored in the cache.
+	 * @throws ApplicationException thrown by
+	 *                              {@link JacksonUtils#fromYAML(String, Class)}
+	 */
+	@ManagedOperation(description = "This method stores the given key-value pair in cache after converting them")
+	public void putYAML(String aKey, String aStringValue) throws ApplicationException {
+		Assert.isTrue(!StringUtils.isEmpty(aStringValue), "YAML value cannot be empty");
+		if (this.valueType == String.class) {
+			put(aKey, this.valueType.cast(aStringValue));
+		} else {
+			put(aKey, JacksonUtils.fromYAML(aStringValue, this.valueType));
 		}
 	}
 
@@ -419,15 +499,22 @@ public class DataMapCache<V> implements Serializable {
 	@Async
 	private void checkRefresh() throws ApplicationException {
 		/*
-		 * if cache has not been initialized or is not refreshable or is currently
-		 * refreshing, return
+		 * if cache has not been initialized or is currently refreshing or is not
+		 * refreshable, return
 		 */
-		if ((this.cacheStatus != CacheStatus.INITIALIZED) && this.cacheDuration < 0) {
+		if (this.cacheStatus != CacheStatus.INITIALIZED || this.cacheDuration < 0) {
 			return;
 		}
 
 		if ((System.currentTimeMillis() - this.cacheRefreshedTime.getTime()) > this.cacheDuration) {
-			refresh();
+			/*
+			 * synchronized block to prevent multiple refreshes
+			 */
+			synchronized (this) {
+				if ((System.currentTimeMillis() - this.cacheRefreshedTime.getTime()) > this.cacheDuration) {
+					refresh();
+				}
+			}
 		}
 	}
 
