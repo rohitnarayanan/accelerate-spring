@@ -76,7 +76,7 @@ public class PropertyCache extends DataMapCache<String> {
 	 * key. Defaults to "KEY"
 	 */
 	private String keyColumnName = "KEY";
-	
+
 	/**
 	 * Name of the query column in
 	 * {@link #setDataSourceAndQuery(DataSource, String)} that contains the property
