@@ -140,7 +140,7 @@ public class PropertyCache extends DataMapCache<String> {
 	 */
 	public String[] getPropertyList(String... aPropertyKeys) {
 		String value = get(aPropertyKeys);
-		return (value == null) ? new String[] {} : value.split(COMMA);
+		return StringUtils.isEmpty(value) ? new String[] {} : value.split(COMMA);
 	}
 
 	/**
@@ -171,13 +171,15 @@ public class PropertyCache extends DataMapCache<String> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see accelerate.spring.cache.DataMapCache#loadCache(java.util.Map)
+	 * @see accelerate.spring.cache.DataMapCache#loadCache(accelerate.commons.data.
+	 * DataMap)
 	 */
 	/**
+	 * @param aCacheMap
 	 * @throws ApplicationException
 	 */
 	@Override
-	protected void loadCache() throws ApplicationException {
+	protected void loadCache(DataMap aCacheMap) throws ApplicationException {
 		final boolean profileEnabled = !StringUtils.isEmpty(this.profileName);
 		final String profilePrefix = profileEnabled ? this.profileName + PERIOD : EMPTY_STRING;
 		final int prefixLength = profileEnabled ? profilePrefix.length() : 0;
@@ -185,13 +187,13 @@ public class PropertyCache extends DataMapCache<String> {
 		if (!StringUtils.isEmpty(this.configURL)) {
 			DataMap configMap = this.yamlMode ? ConfigurationUtils.loadYAMLFile(this.configURL)
 					: ConfigurationUtils.loadPropertyFile(this.configURL);
+
 			configMap.entrySet().parallelStream()
 					.filter(aEntry -> profileEnabled ? aEntry.getKey().startsWith(profilePrefix) : true)
 					.forEach(aEntry -> put(aEntry.getKey().substring(prefixLength), (String) aEntry.getValue()));
-
 		}
 
-		super.loadCache();
+		super.loadCache(aCacheMap);
 	}
 
 	/**
