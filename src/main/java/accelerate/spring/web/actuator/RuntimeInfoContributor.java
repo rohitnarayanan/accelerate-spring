@@ -42,12 +42,11 @@ public class RuntimeInfoContributor implements InfoContributor {
 		 * Runtime information
 		 */
 		RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-		dataMap.putAnd("name", runtimeMXBean.getName()).putAnd("startTime", new Date(runtimeMXBean.getStartTime()))
-				.putAnd("uptime", DateTimeUtils.convertToTime(runtimeMXBean.getUptime()))
-				.putAnd("vmName", runtimeMXBean.getVmName()).putAnd("vmVersion", runtimeMXBean.getVmVersion())
-				.putAnd("vmVendor", runtimeMXBean.getVmVendor()).putAnd("specName", runtimeMXBean.getSpecName())
-				.putAnd("specVersion", runtimeMXBean.getSpecVersion())
-				.putAnd("spencVendor", runtimeMXBean.getSpecVendor());
+		dataMap.add("name", runtimeMXBean.getName()).add("startTime", new Date(runtimeMXBean.getStartTime()))
+				.add("uptime", DateTimeUtils.convertToTime(runtimeMXBean.getUptime()))
+				.add("vmName", runtimeMXBean.getVmName()).add("vmVersion", runtimeMXBean.getVmVersion())
+				.add("vmVendor", runtimeMXBean.getVmVendor()).add("specName", runtimeMXBean.getSpecName())
+				.add("specVersion", runtimeMXBean.getSpecVersion()).add("spencVendor", runtimeMXBean.getSpecVendor());
 
 		aBuilder.withDetail("runtime", dataMap);
 	}

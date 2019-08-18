@@ -41,11 +41,11 @@ public class DiskSpaceInfoContributor implements InfoContributor {
 		 * File system information
 		 */
 		long mbVal = 1024 * 1024;
-		dataMap.putAnd("unit", "mb").put("roots", Arrays.stream(File.listRoots())
-				.map(aFSRoot -> DataMap.newMap().putAnd("path", aFSRoot.getAbsolutePath())
-						.putAnd("totalSpace", (aFSRoot.getTotalSpace() / mbVal) + " mb")
-						.putAnd("usableSpace", (aFSRoot.getUsableSpace() / mbVal) + " mb")
-						.putAnd("freeSpace", (aFSRoot.getFreeSpace() / mbVal) + " mb"))
+		dataMap.add("unit", "mb").add("roots", Arrays.stream(File.listRoots())
+				.map(aFSRoot -> DataMap.newMap().add("path", aFSRoot.getAbsolutePath())
+						.add("totalSpace", (aFSRoot.getTotalSpace() / mbVal) + " mb")
+						.add("usableSpace", (aFSRoot.getUsableSpace() / mbVal) + " mb")
+						.add("freeSpace", (aFSRoot.getFreeSpace() / mbVal) + " mb"))
 				.collect(Collectors.toList()));
 
 		aBuilder.withDetail("diskspace", dataMap);

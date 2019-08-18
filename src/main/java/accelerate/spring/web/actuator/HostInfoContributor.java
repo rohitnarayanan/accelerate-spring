@@ -40,7 +40,7 @@ public class HostInfoContributor implements InfoContributor {
 
 		try {
 			InetAddress localhost = InetAddress.getLocalHost();
-			dataMap.putAnd("hostname", localhost.getHostName()).putAnd("address", localhost.getHostAddress());
+			dataMap.add("hostname", localhost.getHostName()).add("address", localhost.getHostAddress());
 		} catch (@SuppressWarnings("unused") UnknownHostException error) {
 			dataMap.put("hostname", "UNAVAILABLE");
 		}
@@ -49,10 +49,10 @@ public class HostInfoContributor implements InfoContributor {
 		 * OS information
 		 */
 		OperatingSystemMXBean operatingSystemMXBean = ManagementFactory.getOperatingSystemMXBean();
-		dataMap.putAnd("os-name", operatingSystemMXBean.getName()).putAnd("os-arch", operatingSystemMXBean.getArch())
-				.putAnd("os-version", operatingSystemMXBean.getVersion())
-				.putAnd("availableProcessors", operatingSystemMXBean.getAvailableProcessors())
-				.putAnd("systemLoadAverage", operatingSystemMXBean.getSystemLoadAverage());
+		dataMap.add("os-name", operatingSystemMXBean.getName()).add("os-arch", operatingSystemMXBean.getArch())
+				.add("os-version", operatingSystemMXBean.getVersion())
+				.add("availableProcessors", operatingSystemMXBean.getAvailableProcessors())
+				.add("systemLoadAverage", operatingSystemMXBean.getSystemLoadAverage());
 
 		aBuilder.withDetail("host", dataMap);
 	}

@@ -50,32 +50,31 @@ public class MemoryInfoContributor implements InfoContributor {
 		long mbVal = 1024 * 1024;
 
 		// get heap details from the runtime
-		dataMap.putAnd("maxMemory", (runtime.maxMemory() / mbVal) + " mb")
-				.putAnd("totalMemory", (runtime.totalMemory() / mbVal) + " mb")
-				.putAnd("freeMemory", (runtime.freeMemory() / mbVal) + " mb")
-				.putAnd("usedMemory", ((runtime.totalMemory() - runtime.freeMemory()) / mbVal) + " mb")
-				.putAnd("heapMemory", memoryMXBean.getHeapMemoryUsage().toString())
-				.putAnd("nonHeapMemory", memoryMXBean.getNonHeapMemoryUsage().toString())
-				.putAnd("isVerbose", String.valueOf(memoryMXBean.isVerbose()));
+		dataMap.add("maxMemory", (runtime.maxMemory() / mbVal) + " mb")
+				.add("totalMemory", (runtime.totalMemory() / mbVal) + " mb")
+				.add("freeMemory", (runtime.freeMemory() / mbVal) + " mb")
+				.add("usedMemory", ((runtime.totalMemory() - runtime.freeMemory()) / mbVal) + " mb")
+				.add("heapMemory", memoryMXBean.getHeapMemoryUsage().toString())
+				.add("nonHeapMemory", memoryMXBean.getNonHeapMemoryUsage().toString())
+				.add("isVerbose", String.valueOf(memoryMXBean.isVerbose()));
 
 		/*
 		 * populate additional information if verbose is enabled
 		 */
 		if (this.verbose) {
-			dataMap.put("pools",
-					ManagementFactory.getMemoryPoolMXBeans().parallelStream().map(memoryPoolMXBean -> DataMap.newMap()
-							.putAnd("name", memoryPoolMXBean.getName()).putAnd("valid", memoryPoolMXBean.isValid())
-							.putAnd("type", memoryPoolMXBean.getType()).putAnd("usage", memoryPoolMXBean.getUsage())
-							.putAnd("peakUsage", memoryPoolMXBean.getPeakUsage())
-							.putAnd("collectionUsage", memoryPoolMXBean.getCollectionUsage()))
-							.collect(Collectors.toList()));
+			dataMap.put("pools", ManagementFactory.getMemoryPoolMXBeans().parallelStream()
+					.map(memoryPoolMXBean -> DataMap.newMap().add("name", memoryPoolMXBean.getName())
+							.add("valid", memoryPoolMXBean.isValid()).add("type", memoryPoolMXBean.getType())
+							.add("usage", memoryPoolMXBean.getUsage()).add("peakUsage", memoryPoolMXBean.getPeakUsage())
+							.add("collectionUsage", memoryPoolMXBean.getCollectionUsage()))
+					.collect(Collectors.toList()));
 
 			dataMap.put("pools",
 					ManagementFactory.getGarbageCollectorMXBeans().parallelStream()
-							.map(collectorMXBean -> DataMap.newMap().putAnd("name", collectorMXBean.getName())
-									.putAnd("valid", collectorMXBean.isValid())
-									.putAnd("collectionTime", collectorMXBean.getCollectionTime())
-									.putAnd("collectionCount", collectorMXBean.getCollectionCount()))
+							.map(collectorMXBean -> DataMap.newMap().add("name", collectorMXBean.getName())
+									.add("valid", collectorMXBean.isValid())
+									.add("collectionTime", collectorMXBean.getCollectionTime())
+									.add("collectionCount", collectorMXBean.getCollectionCount()))
 							.collect(Collectors.toList()));
 
 			/*
@@ -83,10 +82,10 @@ public class MemoryInfoContributor implements InfoContributor {
 			 */
 			ClassLoadingMXBean classLoadingMXBean = ManagementFactory.getClassLoadingMXBean();
 			dataMap.put("classLoader",
-					DataMap.newMap().putAnd("verbose", classLoadingMXBean.isVerbose())
-							.putAnd("loadedClassCount", classLoadingMXBean.getLoadedClassCount())
-							.putAnd("totalLoadedClassCount", classLoadingMXBean.getTotalLoadedClassCount())
-							.putAnd("unloadedClassCount", classLoadingMXBean.getUnloadedClassCount()));
+					DataMap.newMap().add("verbose", classLoadingMXBean.isVerbose())
+							.add("loadedClassCount", classLoadingMXBean.getLoadedClassCount())
+							.add("totalLoadedClassCount", classLoadingMXBean.getTotalLoadedClassCount())
+							.add("unloadedClassCount", classLoadingMXBean.getUnloadedClassCount()));
 		}
 
 		aBuilder.withDetail("memory", dataMap);
