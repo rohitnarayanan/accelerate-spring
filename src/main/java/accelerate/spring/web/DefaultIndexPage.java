@@ -19,7 +19,7 @@ import accelerate.spring.ProfileConstants;
 import accelerate.spring.logging.Profiled;
 
 /**
- * {@link RestController} providing API for monitoring information
+ * {@link RestController} providing REST_API for monitoring information
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan

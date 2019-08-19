@@ -5,6 +5,7 @@ import static accelerate.commons.constant.CommonConstants.EMPTY_STRING;
 import static accelerate.commons.constant.CommonConstants.PERIOD;
 
 import java.util.List;
+import java.util.function.Function;
 
 import javax.sql.DataSource;
 
@@ -24,15 +25,14 @@ import accelerate.commons.util.StringUtils;
  * </p>
  * <p>
  * The properties can be read from a file viw HTTP URL/local file
- * system/classpath. Currently Properties or YAML formats are supported.
+ * system/classpath. Currently only Properties format is supported.
  * </p>
  * <p>
  * Properties can also be pulled from a database table and the user will have to
  * provide the data source and query via the
- * {@link #setDataSourceAndQuery(DataSource, String)} method. The query should
- * ensure that the key column is the first column in the SELECT clause followed
- * by the value column. For more complex implementation refer to
- * {@link DataMapCache#setDataProviders(DataSource, String, java.util.function.Function, java.util.function.Function)}
+ * {@link #setCacheSource(DataSource, String, String, String, Object...)}
+ * method. For more complex implementation refer to
+ * {@link DataMapCache#setCacheSource(DataSource, String, Function, Function, Function, Object[])}
  * </p>
  * <p>
  * The source (file/db table) can have properties for multiple environments.
@@ -42,13 +42,19 @@ import accelerate.commons.util.StringUtils;
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan
- * @since October 2, 2017
+ * @since August 19, 2019
  */
 public class PropertyCache extends DataMapCache<String> {
 	/**
 	 * serialVersionUID
 	 */
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * The attribute contains the URL to the property file. The URL can be in any
+	 * format supported by the {@link PropertiesUtil} class.
+	 */
+	private String configURL;
 
 	/**
 	 * Name of the profile for which to cache the properties. Usually properties
@@ -58,31 +64,6 @@ public class PropertyCache extends DataMapCache<String> {
 	 * Allows to store same properties with different values.
 	 */
 	private String profileName;
-
-	/**
-	 * The attribute contains the URL to the property file. The URL can be in any
-	 * format supported by the {@link PropertiesUtil} class.
-	 */
-	private String configURL;
-
-	/**
-	 * The attribute enables YAML parsing for {@link #configURL}.
-	 */
-	private boolean yamlMode;
-
-	/**
-	 * Name of the query column in
-	 * {@link #setDataSourceAndQuery(DataSource, String)} that contains the property
-	 * key. Defaults to "KEY"
-	 */
-	private String keyColumnName = "KEY";
-
-	/**
-	 * Name of the query column in
-	 * {@link #setDataSourceAndQuery(DataSource, String)} that contains the property
-	 * value. Defaults to "VALUE"
-	 */
-	private String valueColumnName = "VALUE";
 
 	/**
 	 * Default Constructor
@@ -105,16 +86,16 @@ public class PropertyCache extends DataMapCache<String> {
 	}
 
 	/**
-	 * Constructor to enable YAML source and provide URL to load configuration from
+	 * Constructor to provide URL to load configuration from
 	 *
 	 * @param aCacheName
 	 * @param aConfigURL
-	 * @param aEnableYAML
+	 * @param aProfileName
 	 */
-	public PropertyCache(String aCacheName, String aConfigURL, boolean aEnableYAML) {
+	public PropertyCache(String aCacheName, String aConfigURL, String aProfileName) {
 		this(aCacheName);
 		this.configURL = aConfigURL;
-		this.yamlMode = aEnableYAML;
+		this.profileName = aProfileName;
 	}
 
 	/**
@@ -171,8 +152,7 @@ public class PropertyCache extends DataMapCache<String> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see accelerate.spring.cache.DataMapCache#loadCache(accelerate.commons.data.
-	 * DataMap)
+	 * @see accelerate.spring.cache.DataMapCache#loadCache(DataMap)
 	 */
 	/**
 	 * @param aCacheMap
@@ -180,17 +160,18 @@ public class PropertyCache extends DataMapCache<String> {
 	 */
 	@Override
 	protected void loadCache(DataMap aCacheMap) throws ApplicationException {
+		if (StringUtils.isEmpty(this.configURL) && getSource() != CacheSource.JDBC) {
+			throw new ApplicationException("No cache source provided");
+		}
+
 		final boolean profileEnabled = !StringUtils.isEmpty(this.profileName);
 		final String profilePrefix = profileEnabled ? this.profileName + PERIOD : EMPTY_STRING;
 		final int prefixLength = profileEnabled ? profilePrefix.length() : 0;
 
 		if (!StringUtils.isEmpty(this.configURL)) {
-			DataMap configMap = this.yamlMode ? ConfigurationUtils.loadYAMLFile(this.configURL)
-					: ConfigurationUtils.loadPropertyFile(this.configURL);
-
-			configMap.entrySet().parallelStream()
+			ConfigurationUtils.loadPropertyFile(this.configURL).entrySet().parallelStream()
 					.filter(aEntry -> profileEnabled ? aEntry.getKey().startsWith(profilePrefix) : true)
-					.forEach(aEntry -> put(aEntry.getKey().substring(prefixLength), (String) aEntry.getValue()));
+					.forEach(aEntry -> aCacheMap.put(aEntry.getKey().substring(prefixLength), aEntry.getValue()));
 		}
 
 		super.loadCache(aCacheMap);
@@ -199,11 +180,60 @@ public class PropertyCache extends DataMapCache<String> {
 	/**
 	 * @param aDataSource
 	 * @param aDataQuery
+	 * @param aKeyColumn   Name of the query column containing property key.
+	 *                     Defaults to "KEY"
+	 * @param aValueColumn Name of the query column containing property value.
+	 *                     Defaults to "VALUE"
+	 * @param aQueryParams
 	 */
-	public void setDataSourceAndQuery(DataSource aDataSource, String aDataQuery) {
-		super.setDataProviders(aDataSource, aDataQuery, aRowData -> aRowData.get(this.keyColumnName).toString(),
-				aRowData -> aRowData.get(this.valueColumnName).toString());
+	public void setCacheSource(DataSource aDataSource, String aDataQuery, String aKeyColumn, String aValueColumn,
+			Object... aQueryParams) {
+		final boolean profileEnabled = !StringUtils.isEmpty(this.profileName);
+		final String profilePrefix = profileEnabled ? this.profileName + PERIOD : EMPTY_STRING;
+		final String keyColumn = !StringUtils.isEmpty(aKeyColumn) ? aKeyColumn : "KEY";
+		final String valueColumn = !StringUtils.isEmpty(aValueColumn) ? aValueColumn : "VALUE";
+
+		super.setCacheSource(aDataSource, aDataQuery,
+				aRowData -> profileEnabled ? aRowData.get(keyColumn).toString().startsWith(profilePrefix) : true,
+				aRowData -> aRowData.get(keyColumn).toString(), aRowData -> aRowData.get(valueColumn).toString(),
+				aQueryParams);
 	}
+
+//	/*
+//	 * (non-Javadoc)
+//	 * 
+//	 * @see accelerate.spring.cache.DataMapCache#toString()
+//	 */
+//	/**
+//	 * @return
+//	 */
+//	@Override
+//	public String toString() {
+//		ObjectMapper objectMapper = JacksonUtils.objectMapper();
+//		objectMapper.addMixIn(PropertyCache.class, PropertyCacheMixIn.class);
+//
+//		return JacksonUtils.toJSON(objectMapper, this);
+//	}
+
+//	/**
+//	 * Jackson MixIn to serialize relevant fields
+//	 * 
+//	 * @version 1.0 Initial Version
+//	 * @author Rohit Narayanan
+//	 * @since November 10, 2018
+//	 */
+//	@SuppressWarnings("hiding")
+//	abstract class PropertyCacheMixIn extends DataMapCacheMixIn {
+//		/**
+//		 */
+//		@JsonProperty("configURL")
+//		public String configURL;
+//
+//		/**
+//		 */
+//		@JsonProperty("profileName")
+//		public CacheStatus profileName;
+//	}
 
 	/**
 	 * Getter method for "profileName" property
@@ -216,16 +246,6 @@ public class PropertyCache extends DataMapCache<String> {
 	}
 
 	/**
-	 * Setter method for "profileName" property
-	 *
-	 * @param aProfileName
-	 */
-	@ManagedAttribute
-	public void setProfileName(String aProfileName) {
-		this.profileName = aProfileName;
-	}
-
-	/**
 	 * Getter method for "configURL" property
 	 *
 	 * @return configURL
@@ -233,69 +253,5 @@ public class PropertyCache extends DataMapCache<String> {
 	@ManagedAttribute
 	public String getConfigURL() {
 		return this.configURL;
-	}
-
-	/**
-	 * Setter method for "configURL" property
-	 *
-	 * @param aConfigURL
-	 */
-	@ManagedAttribute
-	public void setConfigURL(String aConfigURL) {
-		this.configURL = aConfigURL;
-	}
-
-	/**
-	 * Getter method for "yamlMode" property
-	 * 
-	 * @return yamlMode
-	 */
-	public boolean isYamlMode() {
-		return this.yamlMode;
-	}
-
-	/**
-	 * Setter method for "yamlMode" property
-	 * 
-	 * @param aYamlMode
-	 */
-	public void setYamlMode(boolean aYamlMode) {
-		this.yamlMode = aYamlMode;
-	}
-
-	/**
-	 * Getter method for "keyColumnName" property
-	 * 
-	 * @return keyColumnName
-	 */
-	public String getKeyColumnName() {
-		return this.keyColumnName;
-	}
-
-	/**
-	 * Setter method for "keyColumnName" property
-	 * 
-	 * @param aKeyColumnName
-	 */
-	public void setKeyColumnName(String aKeyColumnName) {
-		this.keyColumnName = aKeyColumnName;
-	}
-
-	/**
-	 * Getter method for "valueColumnName" property
-	 * 
-	 * @return valueColumnName
-	 */
-	public String getValueColumnName() {
-		return this.valueColumnName;
-	}
-
-	/**
-	 * Setter method for "valueColumnName" property
-	 * 
-	 * @param aValueColumnName
-	 */
-	public void setValueColumnName(String aValueColumnName) {
-		this.valueColumnName = aValueColumnName;
 	}
 }

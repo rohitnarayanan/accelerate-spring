@@ -10,7 +10,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -65,7 +64,7 @@ public class CacheController {
 	 */
 	@RequestMapping(method = RequestMethod.GET, path = "/{cacheName}/keys")
 	public List<String> getCacheKeys(@PathVariable(name = "cacheName", required = true) String aCacheName) {
-		return this.context.getBean(aCacheName, DataMapCache.class).getCacheKeys();
+		return this.context.getBean(aCacheName, DataMapCache.class).keys();
 	}
 
 	/**
@@ -90,32 +89,32 @@ public class CacheController {
 		return jsonValue(aKey, value);
 	}
 
-	/**
-	 * @param aCacheName
-	 * @param aKey
-	 * @param aValue
-	 * @return
-	 */
-	@RequestMapping(method = { RequestMethod.POST, RequestMethod.PUT }, path = "/{cacheName}")
-	public Object put(@PathVariable(name = "cacheName", required = true) String aCacheName,
-			@RequestParam(name = "key", required = true) String aKey, @RequestBody(required = true) String aValue) {
-		DataMapCache<?> cache = this.context.getBean(aCacheName, DataMapCache.class);
-		cache.putJSON(aKey, aValue);
-		return jsonValue(aKey, cache.get(aKey));
-	}
+//	/**
+//	 * @param aCacheName
+//	 * @param aKey
+//	 * @param aValue
+//	 * @return
+//	 */
+//	@RequestMapping(method = { RequestMethod.POST, RequestMethod.PUT }, path = "/{cacheName}")
+//	public Object put(@PathVariable(name = "cacheName", required = true) String aCacheName,
+//			@RequestParam(name = "key", required = true) String aKey, @RequestBody(required = true) String aValue) {
+//		DataMapCache<?> cache = this.context.getBean(aCacheName, DataMapCache.class);
+//		cache.putJSON(aKey, aValue);
+//		return jsonValue(aKey, cache.get(aKey));
+//	}
 
-	/**
-	 * @param aCacheName
-	 * @param aKey
-	 * @return
-	 */
-	@RequestMapping(method = { RequestMethod.DELETE }, path = "/{cacheName}")
-	public Object delete(@PathVariable(name = "cacheName", required = true) String aCacheName,
-			@RequestParam(name = "key", required = true) String aKey) {
-		DataMapCache<?> cache = this.context.getBean(aCacheName, DataMapCache.class);
-		Object value = cache.remove(aKey);
-		return jsonValue(aKey, value);
-	}
+//	/**
+//	 * @param aCacheName
+//	 * @param aKey
+//	 * @return
+//	 */
+//	@RequestMapping(method = { RequestMethod.DELETE }, path = "/{cacheName}")
+//	public Object delete(@PathVariable(name = "cacheName", required = true) String aCacheName,
+//			@RequestParam(name = "key", required = true) String aKey) {
+//		DataMapCache<?> cache = this.context.getBean(aCacheName, DataMapCache.class);
+//		Object value = cache.remove(aKey);
+//		return jsonValue(aKey, value);
+//	}
 
 	/**
 	 * @param aKey

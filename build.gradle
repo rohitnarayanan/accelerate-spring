@@ -8,7 +8,7 @@ apply from: "https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/mas
  * Dependencies
  */
  dependencies {
- 	api ("accelerate:accelerate-commons:0.0.1.SNAPSHOT")
+ 	api ("accelerate:accelerate-commons:${accelerateCommonsVersion}")
  	
  	/*
 	 * spring dependencies

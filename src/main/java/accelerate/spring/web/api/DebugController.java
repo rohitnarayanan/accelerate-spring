@@ -63,11 +63,11 @@ public class DebugController {
 			return null;
 		}
 
-		DataMap dataMap = DataMap.newMap().putAnd("id", session.getId());
-
 		Map<Object, Object> attributeMap = Collections.list(session.getAttributeNames()).stream()
 				.map(name -> new Object[] { name, session.getAttribute(name) })
 				.collect(Collectors.toMap(entry -> entry[0], entry -> entry[1]));
+
+		DataMap dataMap = DataMap.newMap("id", session.getId());
 		dataMap.put("attributes", attributeMap);
 
 		return dataMap;
