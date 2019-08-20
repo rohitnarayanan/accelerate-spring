@@ -1,0 +1,17 @@
+[
+	{
+		"key": "cacheKey1",
+		"beanId": "1",
+		"beanName": "TestBeanName1"
+	},
+	{
+		"key": "cacheKey2",
+		"beanId": "2",
+		"beanName": "TestBeanName2"
+	},
+	{
+		"key": "cacheKey3",
+		"beanId": "3",
+		"beanName": "TestBeanName3"
+	}
+]
