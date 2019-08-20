@@ -601,6 +601,20 @@ public class DataMapCache<V> implements Serializable {
 	}
 
 	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	/**
+	 * @return
+	 */
+	@Override
+	@ManagedOperation(description = "This method returns the basic cache information")
+	public String toString() {
+		return JacksonUtils.toJSON(this);
+	}
+
+	/*
 	 * internal methods
 	 */
 	/**
@@ -690,54 +704,6 @@ public class DataMapCache<V> implements Serializable {
 		 */
 		CUSTOM
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
-	/**
-	 * @return
-	 */
-	@Override
-	@ManagedOperation(description = "This method returns the basic cache information")
-	public String toString() {
-//		ObjectMapper objectMapper = JacksonUtils.objectMapper();
-//		objectMapper.addMixIn(DataMapCache.class, DataMapCacheMixIn.class);
-
-		return JacksonUtils.toJSON(this);
-	}
-
-//	/**
-//	 * Jackson MixIn to serialize relevant fields
-//	 * 
-//	 * @version 1.0 Initial Version
-//	 * @author Rohit Narayanan
-//	 * @since November 10, 2018
-//	 */
-//	@SuppressWarnings("hiding")
-//	abstract class DataMapCacheMixIn {
-//		/**
-//		 */
-//		@JsonProperty("name")
-//		public String name;
-//
-//		/**
-//		 */
-//		@JsonProperty("status")
-//		public CacheStatus status;
-//
-//		/**
-//		 */
-//		@JsonProperty("source")
-//		public CacheStatus source;
-//
-//		/**
-//		 * @return
-//		 */
-//		@JsonProperty("size")
-//		abstract int getCacheSize();
-//	}
 
 	/**
 	 * serialVersionUID

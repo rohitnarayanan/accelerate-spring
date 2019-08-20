@@ -174,7 +174,9 @@ public class PropertyCache extends DataMapCache<String> {
 					.forEach(aEntry -> aCacheMap.put(aEntry.getKey().substring(prefixLength), aEntry.getValue()));
 		}
 
-		super.loadCache(aCacheMap);
+		if (getSource() == CacheSource.JDBC) {
+			super.loadCache(aCacheMap);
+		}
 	}
 
 	/**
