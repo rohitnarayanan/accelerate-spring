@@ -299,7 +299,7 @@ public class DataMapCache<V> implements Serializable {
 		}
 
 		if (!rootNode.isArray()) {
-			throw new ApplicationException("API response is not a List of objects. Please verify");
+			throw new ApplicationException("API response is not a JSON List");
 		}
 
 		final ObjectReader reader = mapper.readerFor(this.valueType);
@@ -473,7 +473,7 @@ public class DataMapCache<V> implements Serializable {
 	 */
 	@ManagedOperation(description = "This method refreshes the cache")
 	public boolean refresh() throws ApplicationException {
-		if (!checkRefresh()) {
+		if (!checkRefresh(true)) {
 			return false;
 		}
 
@@ -481,7 +481,7 @@ public class DataMapCache<V> implements Serializable {
 		 * synchronized block to prevent multiple refreshes
 		 */
 		synchronized (this) {
-			if (!checkRefresh()) {
+			if (!checkRefresh(true)) {
 				return false;
 			}
 
@@ -640,7 +640,7 @@ public class DataMapCache<V> implements Serializable {
 	private void scheduledRefresh() throws ApplicationException {
 		System.err.println("Yes SCHEDULED !!");
 
-		if (checkRefresh()) {
+		if (checkRefresh(false)) {
 			refresh();
 		}
 	}
@@ -648,16 +648,13 @@ public class DataMapCache<V> implements Serializable {
 	/**
 	 * Method to check whether cache should be refreshed
 	 * 
+	 * @param aForce true, if cache age should be disregarded
+	 * 
 	 * @return true, if cache should be refreshed
 	 */
-	private boolean checkRefresh() {
+	private boolean checkRefresh(boolean aForce) {
 		if (this.status == CacheStatus.NEW) {
 			LOGGER.trace("Cache [{}] not initialized", this.name);
-			return false;
-		}
-
-		if (this.status == CacheStatus.REFRESHING) {
-			LOGGER.trace("Cache [{}] already refreshing", this.name);
 			return false;
 		}
 
@@ -666,8 +663,17 @@ public class DataMapCache<V> implements Serializable {
 			return false;
 		}
 
+		if (this.status == CacheStatus.REFRESHING) {
+			LOGGER.trace("Cache [{}] already refreshing", this.name);
+			return false;
+		}
+
 		if ((System.currentTimeMillis() - this.refreshedAt.getTime()) >= this.expiryTime) {
 			LOGGER.trace("Cache [{}] is expired", this.name);
+			return true;
+		}
+
+		if (aForce) {
 			return true;
 		}
 

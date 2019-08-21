@@ -56,7 +56,7 @@ public class TestCacheConfiguration {
 	 */
 	@Bean
 	public static DataMapCache<TestDataBean> basicDataMapCache() {
-		return new DataMapCache<>("basicDataMapCache", TestDataBean.class) {
+		DataMapCache<TestDataBean> basicDataMapCache = new DataMapCache<>("basicDataMapCache", TestDataBean.class) {
 			private static final long serialVersionUID = 1L;
 
 			protected void loadCache(DataMap aCacheMap) throws ApplicationException {
@@ -66,6 +66,9 @@ public class TestCacheConfiguration {
 				aCacheMap.put("cacheKey4", new TestDataBean(4));
 			}
 		};
+		basicDataMapCache.setExpiration("5 SECONDS");
+
+		return basicDataMapCache;
 	}
 
 	/**

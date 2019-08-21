@@ -2,6 +2,7 @@ package accelerate.spring.cache;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -93,14 +94,14 @@ class DataMapCacheTest {
 	/**
 	 * Test method for {@link DataMapCache#setExpiration(String)}.
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	void testSetExpiration() {
-		this.basicDataMapCache.setExpiration("8 HOURS");
+		DataMapCache<Object> testCache = new DataMapCache<>("testCache", Object.class);
+		testCache.setExpiration("8 HOURS");
 
-		assertEquals("8 HOURS", this.basicDataMapCache.getExpiration());
-		assertTrue(this.basicDataMapCache.getExpiryTime() > 0);
-
-		this.basicDataMapCache.setExpiration(null);
+		assertEquals("8 HOURS", testCache.getExpiration());
+		assertEquals(8 * 60 * 60 * 1000, testCache.getExpiryTime());
 	}
 
 	/**
@@ -109,15 +110,15 @@ class DataMapCacheTest {
 	@Test
 	void testLoadCache() {
 		// No cache source provided
-		assertThrows(ApplicationException.class,
-				() -> new DataMapCache<>("testGetStatus", Object.class).loadCache(null));
+		assertThrows(ApplicationException.class, () -> new DataMapCache<>("testCache", Object.class).loadCache(null));
 
 		// Invalid API source
-		DataMapCache<Object> testInvalidAPICache = new DataMapCache<>("testGetStatus", Object.class);
-		testInvalidAPICache.setCacheSource(
+		DataMapCache<Object> testCache = new DataMapCache<>("testCache", Object.class);
+		testCache.setCacheSource(
 				"https://raw.githubusercontent.com/rohitnarayanan/accelerate-spring/release_2/src/test/resources/accelerate/spring/cache/DataMapCacheTest-invalid.json",
 				null);
-		assertThrows(ApplicationException.class, () -> testInvalidAPICache.loadCache(null));
+		assertEquals("API response is not a JSON List",
+				assertThrows(ApplicationException.class, () -> testCache.loadCache(null)).getMessage());
 
 		// successfully loaded API source
 		assertEquals(1, this.apiDataMapCache.get("cacheKey1").getBeanId());
@@ -140,6 +141,7 @@ class DataMapCacheTest {
 	 */
 	@Test
 	void testGetJSON() {
+		assertTrue(StringUtils.isEmpty(this.basicDataMapCache.getJSON("INVALID")));
 		assertEquals(new TestDataBean(1).toJSON(), this.basicDataMapCache.getJSON("cacheKey1"));
 	}
 
@@ -148,6 +150,7 @@ class DataMapCacheTest {
 	 */
 	@Test
 	void testGetXML() {
+		assertTrue(StringUtils.isEmpty(this.basicDataMapCache.getXML("INVALID")));
 		assertEquals(new TestDataBean(1).toXML(), this.basicDataMapCache.getXML("cacheKey1"));
 	}
 
@@ -156,6 +159,7 @@ class DataMapCacheTest {
 	 */
 	@Test
 	void testGetYAML() {
+		assertTrue(StringUtils.isEmpty(this.basicDataMapCache.getYAML("INVALID")));
 		assertEquals(new TestDataBean(1).toYAML(), this.basicDataMapCache.getYAML("cacheKey1"));
 	}
 
@@ -164,7 +168,22 @@ class DataMapCacheTest {
 	 */
 	@Test
 	void testRefresh() {
-		assertTrue(true, "To be implemented for " + this.basicDataMapCache.getName());
+		DataMapCache<Object> testCache = new DataMapCache<>("testCache", Object.class) {
+			private static final long serialVersionUID = 1L;
+
+			protected void loadCache(DataMap aCacheMap) throws ApplicationException {
+				aCacheMap.add("key9", new TestDataBean(9));
+			}
+		};
+
+		// refresh new cache
+		assertFalse(testCache.refresh());
+
+		// refresh non-refreshable cache
+		assertFalse(this.apiDataMapCache.refresh());
+
+		// refresh refreshable cache
+		assertTrue(this.basicDataMapCache.refresh());
 	}
 
 	/**
@@ -189,7 +208,7 @@ class DataMapCacheTest {
 	@Test
 	void testGetStatus() {
 		assertEquals(CacheStatus.OK, this.basicDataMapCache.getStatus());
-		assertEquals(CacheStatus.NEW, new DataMapCache<>("testGetStatus", Object.class).getStatus());
+		assertEquals(CacheStatus.NEW, new DataMapCache<>("testCache", Object.class).getStatus());
 	}
 
 	/**
@@ -197,7 +216,7 @@ class DataMapCacheTest {
 	 */
 	@Test
 	void testGetExpiration() {
-		assertTrue(StringUtils.isEmpty(this.basicDataMapCache.getExpiration()));
+		assertTrue(StringUtils.isEmpty(this.apiDataMapCache.getExpiration()));
 		// remaining logic tested in testSetExpiration()
 	}
 
@@ -206,7 +225,7 @@ class DataMapCacheTest {
 	 */
 	@Test
 	void testGetExpiryTime() {
-		assertEquals(-1, this.basicDataMapCache.getExpiryTime());
+		assertEquals(-1, this.apiDataMapCache.getExpiryTime());
 		// remaining logic tested in testSetExpiration()
 	}
 
