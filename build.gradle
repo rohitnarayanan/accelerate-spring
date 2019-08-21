@@ -45,6 +45,8 @@ apply from: "https://raw.githubusercontent.com/rohitnarayanan/gradle-scripts/mas
 	}
 	testImplementation ("org.junit.jupiter:junit-jupiter-engine")
 	
+	testImplementation ("com.h2database:h2")
+	
 	testImplementation ("org.springframework.security:spring-security-test")
 	testImplementation ("org.springframework.boot:spring-boot-starter-thymeleaf")
 	testImplementation ("org.thymeleaf.extras:thymeleaf-extras-springsecurity5")

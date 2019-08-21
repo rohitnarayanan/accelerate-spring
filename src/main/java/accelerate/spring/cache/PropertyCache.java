@@ -201,42 +201,6 @@ public class PropertyCache extends DataMapCache<String> {
 				aQueryParams);
 	}
 
-//	/*
-//	 * (non-Javadoc)
-//	 * 
-//	 * @see accelerate.spring.cache.DataMapCache#toString()
-//	 */
-//	/**
-//	 * @return
-//	 */
-//	@Override
-//	public String toString() {
-//		ObjectMapper objectMapper = JacksonUtils.objectMapper();
-//		objectMapper.addMixIn(PropertyCache.class, PropertyCacheMixIn.class);
-//
-//		return JacksonUtils.toJSON(objectMapper, this);
-//	}
-
-//	/**
-//	 * Jackson MixIn to serialize relevant fields
-//	 * 
-//	 * @version 1.0 Initial Version
-//	 * @author Rohit Narayanan
-//	 * @since November 10, 2018
-//	 */
-//	@SuppressWarnings("hiding")
-//	abstract class PropertyCacheMixIn extends DataMapCacheMixIn {
-//		/**
-//		 */
-//		@JsonProperty("configURL")
-//		public String configURL;
-//
-//		/**
-//		 */
-//		@JsonProperty("profileName")
-//		public CacheStatus profileName;
-//	}
-
 	/**
 	 * Getter method for "profileName" property
 	 *

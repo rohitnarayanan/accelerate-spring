@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import accelerate.commons.constant.CommonConstants;
 import accelerate.commons.data.DataMap;
 import accelerate.commons.exception.ApplicationException;
+import accelerate.commons.util.CommonUtils;
 import accelerate.commons.util.DateTimeUtils;
 import accelerate.commons.util.JacksonUtils;
 import accelerate.commons.util.StringUtils;
@@ -149,17 +150,17 @@ public class DataMapCache<V> implements Serializable {
 	 * {@link Function} implementation to filter which values to load from database.
 	 * default implementation does not filter anything
 	 */
-	private transient Function<Map<String, Object>, Boolean> recordFilter;
+	private transient Function<DataMap, Boolean> recordFilter;
 
 	/**
 	 * {@link Function} implementation to load key from the result set
 	 */
-	private transient Function<Map<String, Object>, String> keyProvider;
+	private transient Function<DataMap, String> keyProvider;
 
 	/**
 	 * {@link Function} implementation to load value from the result set
 	 */
-	private transient Function<Map<String, Object>, V> valueProvider;
+	private transient Function<DataMap, V> valueProvider;
 
 	/**
 	 * Default Constructor
@@ -197,9 +198,8 @@ public class DataMapCache<V> implements Serializable {
 	 * @param aValueProvider
 	 * @param aQueryParams
 	 */
-	public void setCacheSource(DataSource aDataSource, String aDataQuery,
-			Function<Map<String, Object>, Boolean> aRecordFilter, Function<Map<String, Object>, String> aKeyProvider,
-			Function<Map<String, Object>, V> aValueProvider, Object... aQueryParams) {
+	public void setCacheSource(DataSource aDataSource, String aDataQuery, Function<DataMap, Boolean> aRecordFilter,
+			Function<DataMap, String> aKeyProvider, Function<DataMap, V> aValueProvider, Object... aQueryParams) {
 		this.dataSource = aDataSource;
 		this.dataQuery = aDataQuery;
 		this.queryParams = aQueryParams;
@@ -253,7 +253,7 @@ public class DataMapCache<V> implements Serializable {
 			// publish the initialized event
 			this.applicationEventPublisher.publishEvent(new CacheLoadEvent<>(this, CacheEventType.INIT));
 		} catch (Exception error) {
-			ApplicationException.checkAndThrow(error, "Error in initializing cache [%s]", this.name);
+			ApplicationException.checkAndThrow(error, "Error in initializing cache [{}]", this.name);
 		} finally {
 			profiler.stop().log();
 		}
@@ -319,17 +319,13 @@ public class DataMapCache<V> implements Serializable {
 	 * @param aCacheMap
 	 */
 	private void loadJDBCSource(DataMap aCacheMap) {
-		if (StringUtils.isEmpty(this.dataQuery)) {
-			return;
-		}
-
-		/*
-		 * Query the database
-		 */
 		JdbcTemplate jdbcTemplate = new JdbcTemplate(this.dataSource);
-		List<Map<String, Object>> queryData = jdbcTemplate.queryForList(this.dataQuery, this.queryParams);
-		queryData.parallelStream().filter(aRowMap -> this.recordFilter.apply(aRowMap))
-				.forEach(aRowMap -> aCacheMap.put(this.keyProvider.apply(aRowMap), this.valueProvider.apply(aRowMap)));
+		List<Map<String, Object>> queryData = CommonUtils.isEmpty(this.queryParams)
+				? jdbcTemplate.queryForList(this.dataQuery)
+				: jdbcTemplate.queryForList(this.dataQuery, this.queryParams);
+		queryData.parallelStream().map(aRowMap -> new DataMap().addAll(aRowMap))
+				.filter(aDataMap -> this.recordFilter.apply(aDataMap)).forEach(aDataMap -> aCacheMap
+						.put(this.keyProvider.apply(aDataMap), this.valueProvider.apply(aDataMap)));
 	}
 
 	/*
@@ -470,31 +466,47 @@ public class DataMapCache<V> implements Serializable {
 
 	/**
 	 * This method refreshes the cache
+	 * 
+	 * @return true, if the cache was refreshed
 	 *
 	 * @throws ApplicationException thrown by {@link #loadCache(DataMap)}
 	 */
 	@ManagedOperation(description = "This method refreshes the cache")
-	public void refresh() throws ApplicationException {
-		LOGGER.debug("Refreshing Cache [{}]", this.name);
+	public boolean refresh() throws ApplicationException {
+		if (!checkRefresh()) {
+			return false;
+		}
 
-		this.status = CacheStatus.REFRESHING;
+		/*
+		 * synchronized block to prevent multiple refreshes
+		 */
+		synchronized (this) {
+			if (!checkRefresh()) {
+				return false;
+			}
 
-		// reload the cache
-		DataMap tmpCache = DataMap.newMap();
-		loadCache(tmpCache);
-		this.cacheMap.clear();
-		this.cacheMap.putAll(tmpCache);
+			LOGGER.debug("Refreshing Cache [{}]", this.name);
 
-		// update refresh time and age
-		this.refreshedAt = new Date();
+			this.status = CacheStatus.REFRESHING;
 
-		// reset refresh monitor and wake all threads waiting for access
-		this.status = CacheStatus.OK;
+			// reload the cache
+			DataMap tmpCache = DataMap.newMap();
+			loadCache(tmpCache);
+			this.cacheMap.clear();
+			this.cacheMap.putAll(tmpCache);
 
-		// publish the refresh event
-		this.applicationEventPublisher.publishEvent(new CacheLoadEvent<>(this, CacheEventType.REFRESH));
+			// update refresh time and age
+			this.refreshedAt = new Date();
 
-		LOGGER.info("Cache [{}] Refreshed", this.name);
+			// reset refresh monitor and wake all threads waiting for access
+			this.status = CacheStatus.OK;
+
+			// publish the refresh event
+			this.applicationEventPublisher.publishEvent(new CacheLoadEvent<>(this, CacheEventType.REFRESH));
+
+			LOGGER.info("Cache [{}] Refreshed", this.name);
+			return true;
+		}
 	}
 
 	/*
@@ -623,27 +635,44 @@ public class DataMapCache<V> implements Serializable {
 	 * 
 	 * @throws ApplicationException thrown by {@link #refresh()}
 	 */
-	@Scheduled(fixedDelay = 5 * 60 * 1000)
+	@Scheduled(fixedDelay = 1 * 60 * 1000)
 	@Async
-	private void checkRefresh() throws ApplicationException {
-		/*
-		 * if cache has not been initialized or is currently refreshing or is not
-		 * refreshable, return
-		 */
-		if (this.status != CacheStatus.OK || this.expiryTime < 0) {
-			return;
+	private void scheduledRefresh() throws ApplicationException {
+		System.err.println("Yes SCHEDULED !!");
+
+		if (checkRefresh()) {
+			refresh();
+		}
+	}
+
+	/**
+	 * Method to check whether cache should be refreshed
+	 * 
+	 * @return true, if cache should be refreshed
+	 */
+	private boolean checkRefresh() {
+		if (this.status == CacheStatus.NEW) {
+			LOGGER.trace("Cache [{}] not initialized", this.name);
+			return false;
+		}
+
+		if (this.status == CacheStatus.REFRESHING) {
+			LOGGER.trace("Cache [{}] already refreshing", this.name);
+			return false;
+		}
+
+		if (this.expiryTime < 0) {
+			LOGGER.trace("Cache [{}] not refreshable", this.name);
+			return false;
 		}
 
 		if ((System.currentTimeMillis() - this.refreshedAt.getTime()) >= this.expiryTime) {
-			/*
-			 * synchronized block to prevent multiple refreshes
-			 */
-			synchronized (this) {
-				if ((System.currentTimeMillis() - this.refreshedAt.getTime()) > this.expiryTime) {
-					refresh();
-				}
-			}
+			LOGGER.trace("Cache [{}] is expired", this.name);
+			return true;
 		}
+
+		LOGGER.trace("Cache [{}] age below expiry", this.name);
+		return false;
 	}
 
 	/**
