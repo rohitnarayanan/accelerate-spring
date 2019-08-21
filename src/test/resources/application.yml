@@ -8,6 +8,10 @@ spring:
     - "accelerate.spring.security"
     - "accelerate.spring.web"
   
+#  datasource:
+#    data:
+#    - classpath:/accelerate/spring/cache/DataMapCacheTest.sql
+  
   # Thymeleaf Config
   thymeleaf:
     prefix: classpath:/

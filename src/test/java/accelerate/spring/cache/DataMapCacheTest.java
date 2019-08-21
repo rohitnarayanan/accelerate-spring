@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Date;
 import java.util.function.Function;
 
+import javax.sql.DataSource;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,7 +23,7 @@ import accelerate.spring.cache.DataMapCache.CacheSource;
 import accelerate.spring.cache.DataMapCache.CacheStatus;
 
 /**
- * P{@link Test} class for {@link DataMapCache}
+ * {@link Test} class for {@link DataMapCache}
  * 
  * @version 1.0 Initial Version
  * @author Rohit Narayanan
@@ -36,6 +38,18 @@ class DataMapCacheTest {
 	private DataMapCache<TestDataBean> basicDataMapCache = null;
 
 	/**
+	 * {@link TestCacheConfiguration#apiDataMapCache()} instance
+	 */
+	@Autowired
+	private DataMapCache<TestDataBean> apiDataMapCache = null;
+
+	/**
+	 * {@link TestCacheConfiguration#jdbcDataMapCache(DataSource)} instance
+	 */
+	@Autowired
+	private DataMapCache<TestDataBean> jdbcDataMapCache = null;
+
+	/**
 	 * Test method for {@link DataMapCache#DataMapCache(String, Class)}.
 	 */
 	@Test
@@ -48,18 +62,32 @@ class DataMapCacheTest {
 	 * Test method for
 	 * {@link DataMapCache#setCacheSource(String, Function, Object[])}.
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	void testSetCacheSourceAPI() {
-		assertTrue(true, "To be implemented for " + this.basicDataMapCache.getName());
+		DataMapCache<Object> testCache = new DataMapCache<>("testCache", Object.class);
+		testCache.setCacheSource("testSetCacheSourceAPI", null);
+
+		assertEquals(CacheSource.REST_API, testCache.getSource());
+		assertEquals("testSetCacheSourceAPI", JsonPath.parse(testCache.toString()).read("$.dataURL"));
+
+		// remaining logic tested in testLoadCache()
 	}
 
 	/**
 	 * Test method for
 	 * {@link DataMapCache#setCacheSource(javax.sql.DataSource, String, Function, Function, Function, Object[])}.
 	 */
+	@SuppressWarnings("static-method")
 	@Test
 	void testSetCacheSourceJDBC() {
-		assertTrue(true, "To be implemented for " + this.basicDataMapCache.getName());
+		DataMapCache<Object> testCache = new DataMapCache<>("testCache", Object.class);
+		testCache.setCacheSource(null, "testSetCacheSourceJDBC", null, null, null);
+
+		assertEquals(CacheSource.JDBC, testCache.getSource());
+		assertEquals("testSetCacheSourceJDBC", JsonPath.parse(testCache.toString()).read("$.dataQuery"));
+
+		// remaining logic tested in testLoadCache()
 	}
 
 	/**
@@ -78,11 +106,25 @@ class DataMapCacheTest {
 	/**
 	 * Test method for {@link DataMapCache#loadCache(DataMap)}.
 	 */
-	@SuppressWarnings("static-method")
 	@Test
 	void testLoadCache() {
+		// No cache source provided
 		assertThrows(ApplicationException.class,
 				() -> new DataMapCache<>("testGetStatus", Object.class).loadCache(null));
+
+		// Invalid API source
+		DataMapCache<Object> testInvalidAPICache = new DataMapCache<>("testGetStatus", Object.class);
+		testInvalidAPICache.setCacheSource(
+				"https://raw.githubusercontent.com/rohitnarayanan/accelerate-spring/release_2/src/test/resources/accelerate/spring/cache/DataMapCacheTest-invalid.json",
+				null);
+		assertThrows(ApplicationException.class, () -> testInvalidAPICache.loadCache(null));
+
+		// successfully loaded API source
+		assertEquals(1, this.apiDataMapCache.get("cacheKey1").getBeanId());
+
+		// successfully loaded JDBC source
+		assertEquals(2, this.jdbcDataMapCache.size());
+		assertEquals(2, this.jdbcDataMapCache.get("cacheKey2").getBeanId());
 	}
 
 	/**

@@ -33,11 +33,24 @@ public class TestDataBean extends DataBean {
 	}
 
 	/**
+	 * overloaded constructor
+	 * 
 	 * @param aBeanId
 	 */
 	public TestDataBean(int aBeanId) {
 		this.beanId = aBeanId;
-		this.beanName = CommonTestConstants.BEAN_NAME_VALUE;
+		this.beanName = CommonTestConstants.BEAN_NAME_VALUE + aBeanId;
+	}
+
+	/**
+	 * overloaded constructor
+	 * 
+	 * @param aBeanId
+	 * @param aBeanName
+	 */
+	public TestDataBean(int aBeanId, String aBeanName) {
+		this.beanId = aBeanId;
+		this.beanName = aBeanName;
 	}
 
 	/**

@@ -47,7 +47,7 @@ class CacheLoadEventTest {
 	@Test
 	void testGetCache() {
 		assertTrue(this.listener.cacheSet.size() > 0);
-		assertTrue(this.listener.cacheSet.iterator().next().getCache() instanceof PropertyCache);
+		assertTrue(this.listener.cacheSet.stream().findFirst().get().getCache() instanceof PropertyCache);
 	}
 
 	/**
@@ -56,6 +56,6 @@ class CacheLoadEventTest {
 	 */
 	@Test
 	void testGetCacheEventType() {
-		assertEquals(this.listener.cacheSet.iterator().next().getCacheEventType(), CacheEventType.INIT);
+		assertEquals(this.listener.cacheSet.stream().findFirst().get().getCacheEventType(), CacheEventType.INIT);
 	}
 }

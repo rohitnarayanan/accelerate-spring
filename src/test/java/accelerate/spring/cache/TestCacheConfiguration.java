@@ -1,5 +1,10 @@
 package accelerate.spring.cache;
 
+import static accelerate.spring.CommonTestConstants.KEY;
+
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
@@ -34,11 +39,24 @@ public class TestCacheConfiguration {
 	}
 
 	/**
+	 * @param aDataSource
+	 * @return
+	 */
+	@Bean
+	public static PropertyCache jdbcPropertyCache(@Autowired DataSource aDataSource) {
+		PropertyCache jdbcPropertyCache = new PropertyCache("jdbcPropertyCache",
+				"classpath:/accelerate/spring/cache/PropertyCacheTest.properties", "dev");
+		jdbcPropertyCache.setCacheSource(aDataSource, "SELECT * FROM PropertyCache_Store WHERE environment = ?",
+				"PROPERTY_KEY", "PROPERTY_VALUE", "dev");
+		return jdbcPropertyCache;
+	}
+
+	/**
 	 * @return
 	 */
 	@Bean
 	public static DataMapCache<TestDataBean> basicDataMapCache() {
-		DataMapCache<TestDataBean> beanCache = new DataMapCache<>("basicDataMapCache", TestDataBean.class) {
+		return new DataMapCache<>("basicDataMapCache", TestDataBean.class) {
 			private static final long serialVersionUID = 1L;
 
 			protected void loadCache(DataMap aCacheMap) throws ApplicationException {
@@ -48,7 +66,31 @@ public class TestCacheConfiguration {
 				aCacheMap.put("cacheKey4", new TestDataBean(4));
 			}
 		};
+	}
 
-		return beanCache;
+	/**
+	 * @return
+	 */
+	@Bean
+	public static DataMapCache<TestDataBean> apiDataMapCache() {
+		DataMapCache<TestDataBean> apiDataMapCache = new DataMapCache<>("apiDataMapCache", TestDataBean.class);
+		apiDataMapCache.setCacheSource(
+				"https://raw.githubusercontent.com/rohitnarayanan/accelerate-spring/release_2/src/test/resources/accelerate/spring/cache/DataMapCacheTest.json",
+				aTestDataBean -> aTestDataBean.get(KEY));
+		return apiDataMapCache;
+	}
+
+	/**
+	 * @param aDataSource
+	 * @return
+	 */
+	@Bean
+	public static DataMapCache<TestDataBean> jdbcDataMapCache(@Autowired DataSource aDataSource) {
+		DataMapCache<TestDataBean> jdbcDataMapCache = new DataMapCache<>("jdbcDataMapCache", TestDataBean.class);
+		jdbcDataMapCache.setCacheSource(aDataSource, "SELECT * FROM TestDataBean_Store",
+				aDataMap -> !"cacheKey3".equals(aDataMap.get("CACHE_KEY")), aDataMap -> aDataMap.getString("CACHE_KEY"),
+				aDataMap -> new TestDataBean(aDataMap.getNumber("BEAN_ID", Integer.class),
+						aDataMap.getString("BEAN_NAME")));
+		return jdbcDataMapCache;
 	}
 }

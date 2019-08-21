@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import com.jayway.jsonpath.JsonPath;
+
 import accelerate.commons.exception.ApplicationException;
 
 /**
@@ -44,6 +46,8 @@ class PropertyCacheTest {
 		assertEquals(2, this.profilePropertyCache.size());
 
 		assertThrows(ApplicationException.class, () -> new PropertyCache("NoSource").loadCache(null));
+
+		assertEquals("dev", JsonPath.parse(this.profilePropertyCache.toString()).read("$.profileName"));
 	}
 
 	/**
