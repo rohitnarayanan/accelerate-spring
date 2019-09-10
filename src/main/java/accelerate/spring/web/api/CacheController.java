@@ -12,7 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -46,7 +45,7 @@ public class CacheController {
 	 * @return
 	 */
 	@RequestMapping(method = RequestMethod.GET, path = "/list")
-	public @ResponseBody String listCaches() {
+	public @ResponseBody String getCacheList() {
 		String mapList = this.context.getBeansOfType(DataMapCache.class).values().stream()
 				.map(aCache -> aCache.toString()).collect(Collectors.joining(CommonConstants.COMMA));
 
@@ -62,7 +61,7 @@ public class CacheController {
 	 * @param aCacheName
 	 * @return
 	 */
-	@RequestMapping(method = RequestMethod.GET, path = "/{cacheName}/keys")
+	@RequestMapping(method = RequestMethod.GET, path = "/keys/{cacheName}")
 	public List<String> getCacheKeys(@PathVariable(name = "cacheName", required = true) String aCacheName) {
 		return this.context.getBean(aCacheName, DataMapCache.class).keys();
 	}
@@ -71,7 +70,7 @@ public class CacheController {
 	 * @param aCacheName
 	 * @return
 	 */
-	@RequestMapping(method = RequestMethod.PUT, path = "/{cacheName}/refresh")
+	@RequestMapping(method = RequestMethod.PUT, path = "/refresh/{cacheName}")
 	public @ResponseBody String refreshCache(@PathVariable(name = "cacheName", required = true) String aCacheName) {
 		this.context.getBean(aCacheName, DataMapCache.class).refresh();
 		return this.context.getBean(aCacheName, DataMapCache.class).toString();
@@ -82,9 +81,9 @@ public class CacheController {
 	 * @param aKey
 	 * @return
 	 */
-	@RequestMapping(method = RequestMethod.GET, path = "/{cacheName}")
-	public Object get(@PathVariable(name = "cacheName", required = true) String aCacheName,
-			@RequestParam(name = "key", required = true) String aKey) {
+	@RequestMapping(method = RequestMethod.GET, path = "/get/{cacheName}/{key}")
+	public Object getCacheValue(@PathVariable(name = "cacheName", required = true) String aCacheName,
+			@PathVariable(name = "key", required = true) String aKey) {
 		Object value = this.context.getBean(aCacheName, DataMapCache.class).get(aKey);
 		return jsonValue(aKey, value);
 	}
