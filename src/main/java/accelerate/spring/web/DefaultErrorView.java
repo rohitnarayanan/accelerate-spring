@@ -131,15 +131,15 @@ public class DefaultErrorView implements View {
 		String format = "<li>%s = %s</li>";
 
 		StringBuilder errorDetailsBuffer = new StringBuilder();
-		((Map<?, ?>) debugMap.get("errorDetails")).entrySet()
+		((Map<?, ?>) debugMap.get("error")).entrySet()
 				.forEach(entry -> errorDetailsBuffer.append(String.format(format, entry.getKey(), entry.getValue())));
 
 		StringBuilder requestDetailsBuffer = new StringBuilder();
-		((Map<?, ?>) debugMap.get("requestDetails")).entrySet()
+		((Map<?, ?>) debugMap.get("details")).entrySet()
 				.forEach(entry -> requestDetailsBuffer.append(String.format(format, entry.getKey(), entry.getValue())));
 
 		StringBuilder requestParamsBuffer = new StringBuilder();
-		((Map<?, ?>) debugMap.get("requestParams")).entrySet()
+		((Map<?, ?>) debugMap.get("params")).entrySet()
 				.forEach(entry -> requestParamsBuffer.append(String.format(format, entry.getKey(), entry.getValue())));
 
 		aResponse.getWriter().append(this.htmlSectionStart)

@@ -192,13 +192,15 @@ public class PropertyCache extends DataMapCache<String> {
 			Object... aQueryParams) {
 		final boolean profileEnabled = !StringUtils.isEmpty(this.profileName);
 		final String profilePrefix = profileEnabled ? this.profileName + PERIOD : EMPTY_STRING;
+		final int prefixLength = profileEnabled ? profilePrefix.length() : 0;
+
 		final String keyColumn = !StringUtils.isEmpty(aKeyColumn) ? aKeyColumn : "KEY";
 		final String valueColumn = !StringUtils.isEmpty(aValueColumn) ? aValueColumn : "VALUE";
 
 		super.setCacheSource(aDataSource, aDataQuery,
 				aRowData -> profileEnabled ? aRowData.get(keyColumn).toString().startsWith(profilePrefix) : true,
-				aRowData -> aRowData.get(keyColumn).toString(), aRowData -> aRowData.get(valueColumn).toString(),
-				aQueryParams);
+				aRowData -> aRowData.get(keyColumn).toString().substring(prefixLength),
+				aRowData -> aRowData.get(valueColumn).toString(), aQueryParams);
 	}
 
 	/**

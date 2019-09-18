@@ -170,8 +170,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		for (SecurityConfigurer configurer : this.securityConfigurers) {
 			configurer.configure(aAuthenticationManagerBuilder);
 		}
-
-//		defaultAuthentication(aAuthenticationManagerBuilder);
 	}
 
 	/*
@@ -193,7 +191,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		 */
 		aWebSecurity.ignoring().antMatchers(this.securityConfigProps.getUrlPatternsIgnored())
 				.antMatchers(HttpMethod.OPTIONS, "/**");
-//.antMatchers(this.errorPath)
+		// .antMatchers(this.errorPath)
 
 		/*
 		 * allow sub modules to configure

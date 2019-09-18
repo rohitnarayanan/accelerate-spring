@@ -58,7 +58,7 @@
 		{
 			"name": "accelerate.spring.web.path.favicon",
 			"type": "java.lang.String",
-			"description": "Path to the favicon for the application which will be used on the default index and error pages."
+			"description": "Path to the favicon for the application, defaults to 'favicon.ico'."
 		},
 		{
 			"name": "accelerate.spring.web.default-view.index",

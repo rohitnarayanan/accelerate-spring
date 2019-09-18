@@ -18,7 +18,7 @@ public class WebConfigProps {
 	/**
 	 * Path to the favicon for the application
 	 */
-	@Value("${accelerate.spring.web.path.favicon:}")
+	@Value("${accelerate.spring.web.path.favicon:favicon.ico}")
 	private String faviconPath;
 
 	/**

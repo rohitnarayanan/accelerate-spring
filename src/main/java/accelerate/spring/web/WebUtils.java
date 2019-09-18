@@ -2,8 +2,7 @@ package accelerate.spring.web;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -15,6 +14,7 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.util.Assert;
 import org.springframework.web.servlet.HandlerMapping;
 
 import accelerate.commons.constant.CommonConstants;
@@ -50,7 +50,7 @@ public class WebUtils {
 	public static DataMap debugRequest(HttpServletRequest aRequest) {
 		DataMap debugMap = DataMap.newMap();
 
-		Map<String, Object> requestDetails = new TreeMap<>();
+		DataMap requestDetails = DataMap.newMap();
 		requestDetails.put("contextPath", aRequest.getContextPath());
 		requestDetails.put("localAddr", aRequest.getLocalAddr());
 		requestDetails.put("localName", aRequest.getLocalName());
@@ -69,12 +69,11 @@ public class WebUtils {
 		requestDetails.put("serverName", aRequest.getServerName());
 		requestDetails.put("serverPort", aRequest.getServerPort());
 		requestDetails.put("servletPath", aRequest.getServletPath());
-		debugMap.put("requestDetails", requestDetails);
 
-		Map<String, Object> requestParams = new TreeMap<>();
-		aRequest.getParameterMap().entrySet().parallelStream()
-				.forEach(entry -> requestParams.put(entry.getKey(), entry.getValue()[0]));
-		debugMap.put("requestParams", requestParams);
+		debugMap.put("details", requestDetails);
+		debugMap.put("params", aRequest.getParameterMap().entrySet().parallelStream()
+				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()[0])));
+		debugMap.put("attributes", Collections.list(aRequest.getAttributeNames()));
 
 		return debugMap;
 	}
@@ -83,15 +82,13 @@ public class WebUtils {
 	 * @param aRequest
 	 * @return
 	 */
-	public static final DataMap debugRequestDeep(HttpServletRequest aRequest) {
-		DataMap debugMap = debugRequest(aRequest);
+	public static DataMap debugSession(HttpServletRequest aRequest) {
+		HttpSession session = aRequest.getSession(false);
+		if (session == null) {
+			return null;
+		}
 
-		Map<String, Object> requestAttributes = new TreeMap<>();
-		Collections.list(aRequest.getAttributeNames()).parallelStream()
-				.forEach(name -> requestAttributes.put(name, aRequest.getAttribute(name)));
-		debugMap.put("requestAttributes", requestAttributes);
-
-		return debugMap;
+		return DataMap.newMap("id", session.getId(), "attributes", Collections.list(session.getAttributeNames()));
 	}
 
 	/**
@@ -99,18 +96,15 @@ public class WebUtils {
 	 * @return
 	 */
 	public static final DataMap debugErrorRequest(HttpServletRequest aRequest) {
-		DataMap debugMap = debugRequest(aRequest);
-
-		Map<String, Object> errorDetails = new TreeMap<>();
+		DataMap errorDetails = DataMap.newMap();
 		errorDetails.put("requestURI", aRequest.getAttribute(RequestDispatcher.ERROR_REQUEST_URI));
 		errorDetails.put("errorStatusCode", aRequest.getAttribute(RequestDispatcher.ERROR_STATUS_CODE));
 		errorDetails.put("errorMessage", aRequest.getAttribute(RequestDispatcher.ERROR_MESSAGE));
 		errorDetails.put("errorType", aRequest.getAttribute(RequestDispatcher.ERROR_EXCEPTION_TYPE));
 		errorDetails.put("errorStackTrace",
 				CommonUtils.getErrorLog((Throwable) aRequest.getAttribute(RequestDispatcher.ERROR_EXCEPTION)));
-		debugMap.put("errorDetails", errorDetails);
 
-		return debugMap;
+		return debugRequest(aRequest).add("error", errorDetails);
 	}
 
 	/**
@@ -121,6 +115,8 @@ public class WebUtils {
 	 */
 	public static final void logout(HttpServletRequest aRequest, HttpServletResponse aResponse, String... aCookieList)
 			throws ServletException {
+		Assert.noNullElements(aCookieList, "List of cookies cannot contain null values");
+
 		HttpSession session = aRequest.getSession(false);
 		if (session != null) {
 			LOGGER.debug("Invalidating session[{}] for user [{}]", session.getId(), aRequest.getRemoteUser());
@@ -140,8 +136,7 @@ public class WebUtils {
 	 */
 	public static final void deleteCookies(HttpServletRequest aRequest, HttpServletResponse aResponse,
 			String... aCookieList) {
-//		Assert.noNullElements(new Object[] { aRequest, aResponse, aCookieList }, "All arguments are required");
-//		Assert.noNullElements(aCookieList, "List of cookies are required");
+		Assert.notEmpty(aCookieList, "Cookie list cannot be empty");
 
 		Arrays.stream(aCookieList).map(cookieName -> {
 			LOGGER.debug("Resetting cookie [{}]", cookieName);

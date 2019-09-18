@@ -1,9 +1,5 @@
 package accelerate.spring.web.api;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -11,6 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -47,29 +44,22 @@ public class DebugController {
 	 * @param aRequest
 	 * @return
 	 */
-	@RequestMapping(method = RequestMethod.GET, path = "/request/deep")
-	public static DataMap debugRequestDeep(HttpServletRequest aRequest) {
-		return WebUtils.debugRequestDeep(aRequest);
+	@RequestMapping(method = RequestMethod.GET, path = "/session")
+	public static DataMap debugSession(HttpServletRequest aRequest) {
+		return WebUtils.debugSession(aRequest);
 	}
 
 	/**
 	 * @param aRequest
+	 * @param aAttributeName
 	 * @return
 	 */
-	@RequestMapping(method = RequestMethod.GET, path = "/session")
-	public static DataMap debugSession(HttpServletRequest aRequest) {
+	@RequestMapping(method = RequestMethod.GET, path = "/attribute/{attributeName}")
+	public static DataMap debugAttribute(HttpServletRequest aRequest,
+			@PathVariable(name = "attributeName", required = true) String aAttributeName) {
 		HttpSession session = aRequest.getSession(false);
-		if (session == null) {
-			return null;
-		}
 
-		Map<Object, Object> attributeMap = Collections.list(session.getAttributeNames()).stream()
-				.map(name -> new Object[] { name, session.getAttribute(name) })
-				.collect(Collectors.toMap(entry -> entry[0], entry -> entry[1]));
-
-		DataMap dataMap = DataMap.newMap("id", session.getId());
-		dataMap.put("attributes", attributeMap);
-
-		return dataMap;
+		return DataMap.newMap("request", aRequest.getAttribute(aAttributeName), "session",
+				(session != null) ? session.getAttribute(aAttributeName) : "NOSESSION");
 	}
 }
