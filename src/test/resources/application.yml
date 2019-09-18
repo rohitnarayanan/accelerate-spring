@@ -37,7 +37,7 @@ accelerate:
     defaults: true
     security:
       url-patterns:
-        ignored: /**/*.css,/**/*.js,/**/*.ico,/**/*.png,/**/*.jpg,/**/*.jpeg #Comma separated URL patterns to ignore for security
+        ignored: /**/*.css,/**/*.js,/**/*.ico,/**/*.png,/**/*.jpg,/**/*.jpeg,/noauth #Comma separated URL patterns to ignore for security
     web:
       path:
         favicon: favicon.png

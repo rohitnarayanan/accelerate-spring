@@ -18,8 +18,8 @@ public class AccelerateSpringTest {
 	 */
 	public static void main(String[] aArgs) {
 		try {
-			quickTest();
-//			runSpringBootApp(aArgs);
+//			quickTest();
+			runSpringBootApp(aArgs);
 		} catch (Exception error) {
 			error.printStackTrace();
 		}

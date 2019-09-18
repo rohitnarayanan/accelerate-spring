@@ -1,7 +1,7 @@
 package accelerate.spring.security;
 
 import org.springframework.boot.test.context.TestComponent;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 
 /**
  * {@link SecurityConfigurer} implementation to provide h2-access
@@ -23,10 +23,26 @@ public class H2ConsoleConfigurer implements SecurityConfigurer {
 	 * @param aHttpSecurity
 	 * @throws Exception
 	 */
+//	@Override
+//	public void configure(HttpSecurity aHttpSecurity) throws Exception {
+//		aHttpSecurity.requestMatchers().antMatchers("/h2-console/**").and().csrf().disable();
+//		aHttpSecurity.authorizeRequests().antMatchers().permitAll().and().headers().frameOptions()
+//				.sameOrigin();
+//	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * accelerate.spring.security.SecurityConfigurer#configure(org.springframework.
+	 * security.config.annotation.web.builders.WebSecurity)
+	 */
+	/**
+	 * @param aWebSecurity
+	 * @throws Exception
+	 */
 	@Override
-	public void configure(HttpSecurity aHttpSecurity) throws Exception {
-		aHttpSecurity.requestMatchers().antMatchers("/h2-console/**").and().csrf().disable();
-		aHttpSecurity.authorizeRequests().antMatchers("/h2-console/**").permitAll().and().headers().frameOptions()
-				.sameOrigin();
+	public void configure(WebSecurity aWebSecurity) throws Exception {
+		aWebSecurity.ignoring().antMatchers("/h2-console/**");
 	}
 }
